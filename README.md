@@ -1,5 +1,7 @@
 # techo5-netbird
 
+**English** | [Deutsch](README.de.md)
+
 Puts a [TECHO5](https://github.com/HuskerMinion/techo5) device on your own [NetBird](https://netbird.io)
 network, so a Home Assistant somewhere else can reach it. Use NetBird's own service or a management
 server you run yourself.
