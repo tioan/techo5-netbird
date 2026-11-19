@@ -125,6 +125,9 @@ func install() error {
 		fmt.Printf("\nNetBird will not run yet: %v\n", err)
 		return nil
 	}
+	if cfg, err := loadConfig(); err == nil && cfg.Joined {
+		return nil // an update: the peer is there already
+	}
 	fmt.Println("\nNext: techo5-netbird join (or techo5-netbird migrate, for a device on TECHO5's built-in NetBird)")
 	return nil
 }
