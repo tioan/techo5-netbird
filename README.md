@@ -64,46 +64,61 @@ Not tested yet: joining with a new setup key, and a TECHO5 update with the add-o
 
 ## Install
 
-Download `techo5-netbird` from the [latest release](https://github.com/tioan/techo5-netbird/releases/latest)
-and compare its SHA-256 with the one on the release page. Then, from your computer:
+From your computer, with Python 3 and an ssh client (Windows 10 and later have one):
 
 ```sh
-ssh root@<device> 'cat > /tmp/techo5-netbird && chmod 755 /tmp/techo5-netbird && /tmp/techo5-netbird install && rm /tmp/techo5-netbird' < techo5-netbird
+git clone https://github.com/tioan/techo5-netbird
+cd techo5-netbird
+python3 tools/install.py <device>
 ```
 
-`install` copies itself to `/data/techo5-netbird/bin`, downloads NetBird's client (about 15 MB, 40 MB unpacked), adds one marked line to
-`/data/techo5-linux/rc.local` (anything else in that file is left as it is), and starts the add-on.
+`<device>` is the device's address or name on your network. The script:
+
+1. downloads `techo5-netbird` from the [latest release](https://github.com/tioan/techo5-netbird/releases/latest)
+   and checks its SHA-256;
+2. sends it to the device over SSH and installs it there: the add-on copies itself to
+   `/data/techo5-netbird`, downloads NetBird's client (about 15 MB, 40 MB unpacked), adds one marked
+   line to `/data/techo5-linux/rc.local` (anything else in that file is left as it is), and starts;
+3. asks how the device gets its peer: moved over from TECHO5's built-in NetBird, or joined with a new
+   setup key (both below).
+
+`--migrate`, `--join [--management URL]` or `--skip` answer the question up front, `--version v0.1.0`
+installs a given release, `--file` a program you have, and `--dry-run` only downloads and checks.
+`python3 tools/install.py --help` lists the rest.
+
+The SHA-256 comes from the same release as the program: it catches a download that went wrong, not a
+release that is not this project's.
 
 ### A device already on TECHO5's built-in NetBird
 
-Keep the same peer, with no new setup key:
+Keep the same peer, with no new setup key: answer yes when the script offers to move it over, and turn
+TECHO5's **NetBird** switch off (on the screen or in Home Assistant) when it asks you to.
 
-1. Turn TECHO5's **NetBird** switch off, on the screen or in Home Assistant.
-2. Install the add-on as above.
-3. `ssh root@<device> /data/techo5-netbird/bin/techo5-netbird migrate`
-
-The commands below are shown as `techo5-netbird`: run them on the device as
-`/data/techo5-netbird/bin/techo5-netbird`.
-
-`migrate` moves the peer's identity from TECHO5's NetBird folder to the add-on's, with the management
-server it was joined to. Leave TECHO5's NetBird switch off from then on: turned on, it would need a new
-key, and the add-on stops NetBird while it is on.
+The script then runs `migrate` on the device. It moves the peer's identity from TECHO5's NetBird folder
+to the add-on's, with the management server it was joined to. Leave TECHO5's NetBird switch off from
+then on: turned on, it would need a new key, and the add-on stops NetBird while it is on.
 
 ### A new device
 
 1. **Make a setup key** in your NetBird dashboard: **Setup Keys → Create Setup Key**. Make it one-off,
    with a short expiry, and give it a group (say `techo5`) for your access policies.
-2. **Join:**
-
-   ```sh
-   ssh -t root@<device> /data/techo5-netbird/bin/techo5-netbird join --management https://netbird.example.com
-   ```
-
-   Leave out `--management` for NetBird's own service. The key is asked for on the terminal and not
-   shown as you type; it can also come on stdin. It is used once, to join, and not kept: not in a
-   file, an argument or the log.
+2. **Join:** say yes when the script offers to join, and give your management server (nothing for
+   NetBird's own service). The key is asked for by the device, on your terminal, and not shown as you
+   type. It is used once, to join, and not kept: not in a file, an argument or the log, and it never
+   passes through the script.
 3. **Add the device to Home Assistant by its NetBird name**, as `<name>.<your peer domain>`, with the
    same encryption key, and remove the old entry that used its home address.
+
+### By hand
+
+The commands below are shown as `techo5-netbird`: run them on the device as
+`/data/techo5-netbird/bin/techo5-netbird`. Without the script, an install is:
+
+```sh
+ssh root@<device> 'cat > /tmp/techo5-netbird && chmod 755 /tmp/techo5-netbird && /tmp/techo5-netbird install && rm /tmp/techo5-netbird' < techo5-netbird
+ssh root@<device> /data/techo5-netbird/bin/techo5-netbird migrate      # or:
+ssh -t root@<device> /data/techo5-netbird/bin/techo5-netbird join --management https://netbird.example.com
+```
 
 ## Access policies
 
@@ -147,7 +162,7 @@ looks again every minute.
 ## Updates
 
 - **TECHO5 updates** leave the add-on alone: it lives on userdata, and `rc.local` starts it again.
-- **Add-on updates:** install the new release the same way as under [Install](#install). It replaces
+- **Add-on updates:** run `python3 tools/install.py <device>` again (after a `git pull`). It replaces
   the old one and starts again; the peer and the settings are kept. A release that pins a newer
   NetBird downloads it, and removes the old one.
 
@@ -178,7 +193,8 @@ in it.
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w -X main.version=<version>" -o techo5-netbird .
 ```
 
-The tests are Linux-only: `CGO_ENABLED=0 go test ./...`.
+The Go tests are Linux-only: `CGO_ENABLED=0 go test ./...`. The installer's tests run anywhere:
+`python3 -m unittest discover -s tools`.
 
 ## License
 

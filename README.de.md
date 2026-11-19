@@ -2,141 +2,158 @@
 
 [English](README.md) | **Deutsch**
 
-Bringt ein [TECHO5](https://github.com/HuskerMinion/techo5)-Gerät in dein eigenes
-[NetBird](https://netbird.io)-Netz, damit ein Home Assistant an einem anderen Ort es erreicht. Das geht
-mit NetBirds eigenem Dienst oder mit einem Management-Server, den du selbst betreibst.
+Mit diesem Add-on wird ein [TECHO5](https://github.com/HuskerMinion/techo5)-Gerät Teil deines eigenen
+[NetBird](https://netbird.io)-Netzes. So kann auch ein Home Assistant an einem anderen Standort darauf
+zugreifen. Du kannst NetBirds gehosteten Dienst nutzen oder einen eigenen Management-Server.
 
-Es ist NetBirds eigener Client. Er läuft von userdata und wird bei jedem Start über TECHO5s
+Das Add-on verwendet NetBirds offiziellen Client. Er liegt auf der userdata-Partition und wird bei
+jedem Systemstart über TECHO5s
 [rc.local](https://github.com/HuskerMinion/techo5/blob/main/docs/setup.md#running-something-of-your-own-at-boot)
-gestartet, deshalb übersteht er TECHO5-Updates. Das Add-on wird von seinem Autor gebaut und gepflegt,
-nicht von TECHO5, und TECHO5 testet es nicht.
+gestartet. Deshalb bleibt er auch nach TECHO5-Updates erhalten. Das Add-on ist ein eigenständiges
+Projekt: TECHO5 pflegt und testet es nicht.
 
-## Was es macht und was nicht
+## Was es tut und was nicht
 
-Es betreibt NetBird so, wie es TECHO5s eingebautes NetBird getan hat:
+Es betreibt NetBird genauso, wie es das in TECHO5 eingebaute NetBird bisher getan hat:
 
-- **Home Assistant über NetBird.** Home Assistant erreicht das Gerät über seine verschlüsselte
-  ESPHome-Verbindung (Port 6053), unter seinem NetBird-Namen oder seiner NetBird-Adresse.
-- **Sonst kommt nichts herein.** TECHO5s eigene Firewall lässt über NetBirds Interface (`netbird0`)
-  nur die Ports 6053, 8181 (die Setup-Seite, nur solange Remote-Setup an ist) und 22 (SSH, falls du es
-  eingeschaltet hast) sowie Ping zu. Das Add-on startet NetBird nur, wenn diese Firewall-Regel vorhanden
-  ist. NetBirds Access-Policies schränken das pro Peer weiter ein; eine Policy kann nie mehr öffnen.
-- **Das Gerät übernimmt nichts aus dem Netz.** Kein DNS, kein IPv6, kein NetBird-SSH-Server, keine
-  Routen (außer du gibst Netze an: siehe [Routen aus dem Mesh](#routen-aus-dem-mesh)). Es routet nichts
-  Eigenes ins Mesh und ist kein Exit-Node. Der Client schickt NetBird keine Metriken.
-- **NetBirds Client, so wie NetBird ihn veröffentlicht.** Das Add-on lädt NetBirds eigenes
-  Release-Archiv für arm64 herunter und prüft Größe und SHA-256 gegen die in diesem Release
-  festgelegten Werte, bevor es das Archiv entpackt. Warum es keinen eigenen Build verwendet:
-  [docs/client-binary.md](docs/client-binary.md) (Englisch).
+- **Home Assistant über NetBird.** Home Assistant verbindet sich über die verschlüsselte
+  ESPHome-Schnittstelle (Port 6053) mit dem Gerät, unter dessen NetBird-Namen oder -Adresse.
+- **Sonst kommt nichts durch.** TECHO5s eigene Firewall erlaubt auf NetBirds Netzwerkschnittstelle
+  (`netbird0`) nur Ping und die Ports 6053, 8181 (Setup-Seite, nur bei eingeschaltetem Remote-Setup)
+  und 22 (SSH, wenn aktiviert). Ohne diese Firewall-Regel startet das Add-on NetBird gar nicht erst.
+  Mit NetBirds Access-Policies lässt sich der Zugriff pro Peer weiter einschränken, aber nie erweitern.
+- **Das Gerät übernimmt nichts aus dem Netz.** Kein DNS, kein IPv6, kein NetBird-SSH-Server und keine
+  Routen, solange du keine Netze freigibst (siehe [Routen aus dem Mesh](#routen-aus-dem-mesh)). Es
+  stellt selbst keine Routen bereit und ist kein Exit-Node. Der Client sendet keine Metriken an NetBird.
+- **NetBirds Client im Original.** Das Add-on lädt NetBirds offizielles Release-Archiv für arm64 und
+  prüft vor dem Entpacken Größe und SHA-256 gegen die Werte, die in diesem Release festgeschrieben
+  sind. Warum es keinen eigenen Build gibt, steht in [docs/client-binary.md](docs/client-binary.md)
+  (auf Englisch).
 
-In Home Assistant gibt es keinen Schalter und keinen Status dafür und auf dem Bildschirm nichts:
-Einrichtung und Kontrolle laufen über SSH.
+In Home Assistant und auf dem Display taucht das Add-on nicht auf. Eingerichtet und überprüft wird es
+per SSH.
 
 ## Geräte
 
-Jedes TECHO5-Gerät, auf dem TECHO5s eingebautes NetBird lief und das beim Start `rc.local` ausführt:
-die Echo Shows und der Echo Spot. Ein einziges arm64-Programm läuft auf allen, auch auf dem Show 8
-(2. Gen.) mit seinem 32-Bit-Userland.
+Alle TECHO5-Geräte, auf denen das eingebaute NetBird lief und die beim Start `rc.local` ausführen: die
+Echo Shows und der Echo Spot. Ein und dasselbe arm64-Programm läuft auf allen, auch auf dem Show 8
+(2. Generation) mit seinem 32-Bit-Userland.
 
-**Getestet auf:** einem Echo Show 8 (2. Gen.). Der Echo Spot sollte genauso funktionieren, ist aber
-nicht getestet. Nicht für die Echo Dots und den Skylight.
+**Getestet auf:** einem Echo Show 8 (2. Generation). Der Echo Spot sollte genauso funktionieren, ist
+aber noch nicht getestet. Für die Echo Dots und den Skylight ist das Add-on nicht gedacht.
 
-Was auf diesem Gerät geprüft wurde, mit einem selbst betriebenen Management-Server:
+Auf diesem Gerät geprüft, mit einem selbst betriebenen Management-Server:
 
-- Installation und `migrate` eines Peers aus TECHO5s eingebautem NetBird: gleicher Name, gleiche
-  Adresse, Profil unverändert;
-- über das Mesh: Ping und SSH kommen herein, alles andere halten Firewall oder Policies zurück;
-- Firewall-Regel entfernt, TECHO5s NetBird eingeschaltet: NetBird gestoppt, und wieder da, sobald
-  behoben;
-- NetBird oder das Add-on abgeschossen, Gerät neu gestartet: wieder gestartet, rund 20 s nach dem
-  Booten verbunden;
-- Routen: mit dem Heim-LAN in der Liste war ein Rechner dort über `netbird0` erreichbar; mit einem
-  anderen Netz in der Liste wurde ein von Hand ausgewähltes Heim-LAN binnen Sekunden wieder abgewählt;
-  `--clear` nahm die Route weg; zu weite Netze, IPv6 und die eigenen Netze des Geräts wurden
-  abgelehnt.
+- Installation und Übernahme (`migrate`) des Peers aus TECHO5s eingebautem NetBird: Name und Adresse
+  bleiben gleich, das Profil bleibt unverändert.
+- Über das Mesh kommen Ping und SSH an, alles andere blockieren Firewall oder Policies.
+- Fehlt die Firewall-Regel oder ist TECHO5s NetBird eingeschaltet, stoppt NetBird. Ist das behoben,
+  läuft es wieder.
+- Nach dem Beenden von NetBird oder des Add-ons und nach einem Neustart des Geräts startet alles von
+  selbst neu. Rund 20 Sekunden nach dem Booten ist das Gerät verbunden.
+- Routen: Mit freigegebenem Heimnetz war ein Rechner dort über `netbird0` erreichbar. War nur ein
+  anderes Netz freigegeben, wurde ein von Hand ausgewähltes Heimnetz nach wenigen Sekunden wieder
+  abgewählt. `--clear` entfernte die Route. Zu große Netze, IPv6 und die eigenen Netze des Geräts
+  wurden abgelehnt.
 
-Noch nicht getestet: Anmelden mit einem neuen Setup-Key und ein TECHO5-Update mit laufendem Add-on.
+Noch nicht getestet: der Beitritt mit einem neuen Setup-Key und ein TECHO5-Update bei laufendem Add-on.
 
-## Was du brauchst
+## Voraussetzungen
 
-- TECHO5 mit eingeschaltetem SSH und hinterlegtem Schlüssel (Einstellungen auf dem Gerät oder die
-  Setup-Seite).
-- Einen **Verschlüsselungsschlüssel** auf der Verbindung von Home Assistant zum Gerät. Ohne ihn startet
-  das Add-on NetBird nicht: Über NetBird liefe die Verbindung sonst im Klartext.
-- TECHO5s eigenes NetBird **aus** und Tailscale aus. NetBird und Tailscale nummerieren ihre Geräte
-  beide in 100.64.0.0/10 und können nicht nebeneinander laufen.
-- Etwa 60 MB frei auf userdata und rund 110 MB Arbeitsspeicher im Betrieb.
+- TECHO5 mit aktiviertem SSH und hinterlegtem Schlüssel (in den Einstellungen auf dem Gerät oder über
+  die Setup-Seite).
+- Ein **Verschlüsselungsschlüssel** für die Verbindung zwischen Home Assistant und dem Gerät. Ohne ihn
+  startet das Add-on NetBird nicht, denn sonst liefe die Verbindung über NetBird unverschlüsselt.
+- TECHO5s eingebautes NetBird und Tailscale sind **aus**. NetBird und Tailscale vergeben beide Adressen
+  aus 100.64.0.0/10 und können nicht gleichzeitig laufen.
+- Etwa 60 MB freier Speicher auf userdata und rund 110 MB Arbeitsspeicher im Betrieb.
 
 ## Installation
 
-Lade `techo5-netbird` aus dem [neuesten Release](https://github.com/tioan/techo5-netbird/releases/latest)
-herunter und vergleiche seinen SHA-256 mit dem auf der Release-Seite. Dann, von deinem Rechner aus:
+Auf deinem Rechner, mit Python 3 und einem SSH-Client (ab Windows 10 ist einer dabei):
 
 ```sh
-ssh root@<device> 'cat > /tmp/techo5-netbird && chmod 755 /tmp/techo5-netbird && /tmp/techo5-netbird install && rm /tmp/techo5-netbird' < techo5-netbird
+git clone https://github.com/tioan/techo5-netbird
+cd techo5-netbird
+python3 tools/install.py <gerät>
 ```
 
-`install` kopiert sich nach `/data/techo5-netbird/bin`, lädt NetBirds Client herunter (etwa 15 MB,
-entpackt 40 MB), fügt eine markierte Zeile in `/data/techo5-linux/rc.local` ein (alles andere in der
-Datei bleibt, wie es ist) und startet das Add-on.
+`<gerät>` ist die Adresse oder der Name des Geräts in deinem Netz. Das Skript:
 
-### Ein Gerät, das schon TECHO5s eingebautes NetBird nutzt
+1. lädt `techo5-netbird` aus dem [neuesten Release](https://github.com/tioan/techo5-netbird/releases/latest)
+   und prüft den SHA-256,
+2. überträgt es per SSH aufs Gerät und installiert es dort: Das Add-on kopiert sich nach
+   `/data/techo5-netbird`, lädt NetBirds Client (etwa 15 MB, entpackt 40 MB), trägt eine markierte
+   Zeile in `/data/techo5-linux/rc.local` ein (der Rest der Datei bleibt unverändert) und startet,
+3. fragt, wie das Gerät zu seinem Peer kommt: Übernahme aus TECHO5s eingebautem NetBird oder Beitritt
+   mit einem neuen Setup-Key (beides unten beschrieben).
 
-Derselbe Peer bleibt, ohne neuen Setup-Key:
+Mit `--migrate`, `--join [--management URL]` oder `--skip` beantwortest du die Frage vorab.
+`--version v0.1.0` installiert ein bestimmtes Release, `--file` ein vorhandenes Programm, und
+`--dry-run` lädt nur herunter und prüft. Alle Optionen zeigt `python3 tools/install.py --help`.
 
-1. Schalte TECHO5s **NetBird**-Schalter aus, auf dem Bildschirm oder in Home Assistant.
-2. Installiere das Add-on wie oben.
-3. `ssh root@<device> /data/techo5-netbird/bin/techo5-netbird migrate`
+Der SHA-256 stammt aus demselben Release wie das Programm. Er erkennt also einen fehlerhaften Download,
+aber kein Release, das nicht von diesem Projekt stammt.
 
-Die Befehle unten stehen als `techo5-netbird` da: Führe sie auf dem Gerät als
-`/data/techo5-netbird/bin/techo5-netbird` aus.
+### Gerät mit TECHO5s eingebautem NetBird
 
-`migrate` verschiebt die Identität des Peers aus TECHO5s NetBird-Ordner in den des Add-ons, zusammen
-mit dem Management-Server, bei dem er angemeldet war. Lass TECHO5s NetBird-Schalter danach aus:
-Eingeschaltet bräuchte er einen neuen Key, und das Add-on stoppt NetBird, solange er an ist.
+Der bisherige Peer bleibt erhalten, ein neuer Setup-Key ist nicht nötig: Bestätige die Übernahme, wenn
+das Skript sie anbietet, und schalte TECHO5s **NetBird** aus (auf dem Display oder in Home Assistant),
+sobald es dich dazu auffordert.
 
-### Ein neues Gerät
+Das Skript führt dann `migrate` auf dem Gerät aus. Dabei wandert die Identität des Peers samt
+Management-Server aus TECHO5s NetBird-Ordner in den des Add-ons. Lass TECHO5s NetBird danach
+ausgeschaltet: Eingeschaltet bräuchte es einen neuen Key, und das Add-on hält NetBird an, solange es
+an ist.
 
-1. **Erstelle einen Setup-Key** in deinem NetBird-Dashboard: **Setup Keys → Create Setup Key**. Mach
-   ihn einmalig, mit kurzer Gültigkeit, und gib ihm eine Gruppe (etwa `techo5`) für deine
-   Access-Policies.
-2. **Anmelden:**
+### Neues Gerät
 
-   ```sh
-   ssh -t root@<device> /data/techo5-netbird/bin/techo5-netbird join --management https://netbird.example.com
-   ```
+1. **Setup-Key anlegen** im NetBird-Dashboard unter **Setup Keys → Create Setup Key**. Am besten
+   einmalig verwendbar, kurz gültig und mit einer Gruppe (etwa `techo5`) für deine Access-Policies.
+2. **Beitreten:** Bestätige den Beitritt, wenn das Skript ihn anbietet, und gib deinen
+   Management-Server an (leer lassen für NetBirds gehosteten Dienst). Den Key fragt das Gerät selbst
+   in deinem Terminal ab, die Eingabe bleibt unsichtbar. Er wird nur einmal zum Beitritt verwendet und
+   nirgends gespeichert: nicht in einer Datei, nicht als Argument, nicht im Log. Auch das Skript
+   bekommt ihn nie zu sehen.
+3. **Gerät in Home Assistant unter seinem NetBird-Namen hinzufügen**, also als
+   `<name>.<deine Peer-Domain>`, mit demselben Verschlüsselungsschlüssel. Den alten Eintrag mit der
+   Heimnetz-Adresse entfernst du.
 
-   Lass `--management` für NetBirds eigenen Dienst weg. Der Key wird im Terminal abgefragt und beim
-   Tippen nicht angezeigt; er kann auch über stdin kommen. Er wird einmal zum Anmelden benutzt und
-   nicht aufbewahrt: nicht in einer Datei, nicht als Argument, nicht im Log.
-3. **Füge das Gerät in Home Assistant unter seinem NetBird-Namen hinzu**, als
-   `<name>.<deine Peer-Domain>`, mit demselben Verschlüsselungsschlüssel, und entferne den alten
-   Eintrag mit der Heimadresse.
+### Von Hand
+
+Die Befehle in dieser Anleitung stehen als `techo5-netbird` da. Auf dem Gerät rufst du sie als
+`/data/techo5-netbird/bin/techo5-netbird` auf. Ohne das Skript sieht die Installation so aus:
+
+```sh
+ssh root@<gerät> 'cat > /tmp/techo5-netbird && chmod 755 /tmp/techo5-netbird && /tmp/techo5-netbird install && rm /tmp/techo5-netbird' < techo5-netbird
+ssh root@<gerät> /data/techo5-netbird/bin/techo5-netbird migrate      # oder:
+ssh -t root@<gerät> /data/techo5-netbird/bin/techo5-netbird join --management https://netbird.example.com
+```
 
 ## Access-Policies
 
-Ein neues NetBird-Netz lässt jeden Peer jeden anderen erreichen. Erlaube nur der Gruppe deines
-Home-Assistant-Hosts den Zugriff auf die Gruppe `techo5` über TCP 6053 und nur deinen eigenen Geräten
-TCP 8181 und 22. Die Firewall des Clients ist an und setzt das durch, unterhalb von TECHO5s Firewall,
-die die Obergrenze bleibt.
+In einem neuen NetBird-Netz kann jeder Peer jeden anderen erreichen. Erlaube der Gruppe deines
+Home-Assistant-Hosts nur TCP 6053 zur Gruppe `techo5`, und nur deinen eigenen Geräten TCP 8181 und 22.
+Die Firewall des Clients ist aktiv und setzt diese Regeln durch. TECHO5s Firewall bleibt dabei die
+äußere Grenze.
 
 ## Routen aus dem Mesh
 
-Aus, bis du Netze angibst. Dann darf das Gerät die Routen nutzen, die das Mesh ihm anbietet, etwa das
-LAN zu Hause hinter einem Routing-Peer, aber nur zu den angegebenen Netzen:
+Standardmäßig aus. Sobald du Netze freigibst, darf das Gerät die Routen nutzen, die ihm das Mesh
+anbietet, etwa ins Heimnetz hinter einem Routing-Peer. Aber nur in die freigegebenen Netze:
 
 ```sh
 techo5-netbird routes 192.168.1.0/24            # nur dieses Netz
 techo5-netbird routes 192.168.1.0/24 10.20.0.0/16
-techo5-netbird routes                           # was angegeben ist
-techo5-netbird routes --clear                   # keine: gar keine Routen
+techo5-netbird routes                           # freigegebene Netze anzeigen
+techo5-netbird routes --clear                   # keine Routen mehr
 ```
 
-Nur IPv4-Netze, höchstens /8, und keine, die sich mit den eigenen Netzen des Geräts überschneiden.
-NetBird würde jede Route übernehmen, die sein Management-Server anbietet, auch später hinzugefügte. Das
-Add-on beschränkt die Auswahl auf die angegebenen Netze und wählt innerhalb von 15 Sekunden neu aus,
-wenn eine andere Route auftaucht. Routen ein- oder auszuschalten startet NetBird neu. Das Gerät routet
-nie für andere und nutzt keinen Exit-Node.
+Erlaubt sind nur IPv4-Netze, höchstens ein /8, und keine, die sich mit den eigenen Netzen des Geräts
+überschneiden. NetBird selbst würde jede Route übernehmen, die der Management-Server anbietet, auch
+später hinzugekommene. Das Add-on begrenzt die Auswahl auf die freigegebenen Netze und korrigiert sie
+innerhalb von 15 Sekunden, falls eine weitere Route auftaucht. Beim Ein- oder Ausschalten der Routen
+startet NetBird neu. Das Gerät routet nie für andere und nutzt keinen Exit-Node.
 
 ## Im Alltag
 
@@ -144,56 +161,58 @@ nie für andere und nutzt keinen Exit-Node.
 techo5-netbird status
 ```
 
-Zeigt, ob das Add-on beim Start gestartet wird, ob NetBird läuft und verbunden ist, unter welchem Namen
-und welcher Adresse, die genutzten Routen und was nicht stimmt, falls etwas nicht stimmt. Das Log ist
-`/data/techo5-netbird/techo5-netbird.log`, NetBirds eigene Zeilen eingeschlossen. Bei 1 MB wird es als
-`.1` aufbewahrt und ein neues begonnen.
+Zeigt, ob das Add-on beim Booten startet, ob NetBird läuft und verbunden ist, unter welchem Namen und
+welcher Adresse, welche Routen genutzt werden und was gegebenenfalls nicht stimmt. Das Log liegt unter
+`/data/techo5-netbird/techo5-netbird.log` und enthält auch NetBirds eigene Meldungen. Ab 1 MB wird es
+als `.1` gesichert und neu begonnen.
 
-Das Add-on startet NetBird neu, wenn es sich beendet: zuerst nach 5 Sekunden, dann mit bis zu 5 Minuten
-Abstand. Es wartet, solange eine Prüfung fehlschlägt (keine Firewall-Regel, kein
-Verschlüsselungsschlüssel, TECHO5s NetBird oder Tailscale an), und schaut jede Minute erneut nach.
+Beendet sich NetBird, startet das Add-on es neu: zuerst nach 5 Sekunden, danach in wachsenden Abständen
+bis zu 5 Minuten. Schlägt eine Prüfung fehl (Firewall-Regel fehlt, kein Verschlüsselungsschlüssel,
+TECHO5s NetBird oder Tailscale eingeschaltet), wartet es und prüft jede Minute erneut.
 
 ## Updates
 
-- **TECHO5-Updates** lassen das Add-on in Ruhe: Es liegt auf userdata, und `rc.local` startet es
+- **TECHO5-Updates** betreffen das Add-on nicht: Es liegt auf userdata, und `rc.local` startet es
   wieder.
-- **Add-on-Updates:** Installiere das neue Release genauso wie unter [Installation](#installation). Es
-  ersetzt das alte und startet neu; Peer und Einstellungen bleiben erhalten. Ein Release, das ein
-  neueres NetBird festlegt, lädt es herunter und entfernt das alte.
+- **Add-on-Updates:** Nach einem `git pull` einfach `python3 tools/install.py <gerät>` erneut
+  ausführen. Die neue Version ersetzt die alte und startet neu, Peer und Einstellungen bleiben
+  erhalten. Legt ein Release eine neuere NetBird-Version fest, wird sie heruntergeladen und die alte
+  entfernt.
 
 ## Deinstallation
 
 ```sh
-techo5-netbird uninstall           # stoppt es, kein Start mehr beim Booten; der Peer bleibt
-techo5-netbird uninstall --purge   # und löscht /data/techo5-netbird, samt Identität des Peers
+techo5-netbird uninstall           # stoppt das Add-on und entfernt es aus dem Autostart; der Peer bleibt
+techo5-netbird uninstall --purge   # löscht zusätzlich /data/techo5-netbird und damit die Identität des Peers
 ```
 
-Entferne das Gerät danach unter **Peers** in deinem NetBird-Dashboard. Alles andere in `rc.local`
+Entferne das Gerät anschließend unter **Peers** im NetBird-Dashboard. Alles andere in `rc.local`
 bleibt erhalten.
 
 ## Gut zu wissen
 
-- **Ein Zurücksetzen des Geräts für jemand anderen** (TECHO5s Einstellungen) löscht weder das Add-on
-  noch seinen Peer. Führe vorher `techo5-netbird uninstall --purge` aus.
-- **NetBird aus der Ferne auszuschalten** schneidet dir den Weg zum Gerät ab. Das Add-on per SSH über
-  NetBird zu stoppen, ebenso.
-- **Ein Diagnose-Paket** von TECHO5 kennt das Add-on nicht und verbirgt seinen NetBird-Namen und seine
-  Adresse nicht. Lies es, bevor du es weitergibst.
-- **Last auf dem Gerät:** Auf einem Echo Show 8 (2. Gen.) brauchte NetBird im Leerlauf etwa 1,5 % eines
-  Kerns, mit rund 50 Paketen pro Sekunde etwa 4,5 %, und um die 110 MB Arbeitsspeicher.
+- **Zurücksetzen für einen neuen Besitzer** (in TECHO5s Einstellungen) löscht weder das Add-on noch
+  seinen Peer. Führe vorher `techo5-netbird uninstall --purge` aus.
+- **Wer NetBird aus der Ferne abschaltet**, sperrt sich selbst aus. Das gilt auch, wenn du das Add-on
+  per SSH über NetBird stoppst.
+- **Diagnosepakete** von TECHO5 kennen das Add-on nicht und enthalten seinen NetBird-Namen und seine
+  Adresse im Klartext. Prüfe sie, bevor du sie weitergibst.
+- **Last auf dem Gerät:** Auf einem Echo Show 8 (2. Generation) brauchte NetBird im Leerlauf etwa
+  1,5 % eines Kerns, bei rund 50 Paketen pro Sekunde etwa 4,5 %, dazu um die 110 MB Arbeitsspeicher.
 
-## Bauen
+## Selbst bauen
 
 ```sh
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w -X main.version=<version>" -o techo5-netbird .
 ```
 
-Die Tests laufen nur unter Linux: `CGO_ENABLED=0 go test ./...`.
+Die Go-Tests laufen nur unter Linux: `CGO_ENABLED=0 go test ./...`. Die Tests des Installers laufen
+überall: `python3 -m unittest discover -s tools`.
 
 ## Lizenz
 
 MIT, siehe [LICENSE](LICENSE). NetBirds Client ist weder Teil dieses Repositorys noch seiner Releases:
-Das Gerät lädt ihn aus NetBirds eigenem Release herunter, mit NetBirds Lizenzen, die das Add-on daneben
-ablegt (BSD-3-Clause für den Client). Siehe [NOTICE](NOTICE).
+Das Gerät lädt ihn direkt aus NetBirds offiziellem Release, zusammen mit NetBirds Lizenzen, die das
+Add-on daneben ablegt (BSD-3-Clause für den Client). Details in [NOTICE](NOTICE).
 
-Teile sind aus TECHO5 (MIT) übernommen, wie im Quelltext vermerkt.
+Einige Teile stammen aus TECHO5 (MIT), jeweils im Quelltext vermerkt.
