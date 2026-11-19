@@ -41,6 +41,22 @@ die Echo Shows und der Echo Spot. Ein einziges arm64-Programm läuft auf allen, 
 **Getestet auf:** einem Echo Show 8 (2. Gen.). Der Echo Spot sollte genauso funktionieren, ist aber
 nicht getestet. Nicht für die Echo Dots und den Skylight.
 
+Was auf diesem Gerät geprüft wurde, mit einem selbst betriebenen Management-Server:
+
+- Installation und `migrate` eines Peers aus TECHO5s eingebautem NetBird: gleicher Name, gleiche
+  Adresse, Profil unverändert;
+- über das Mesh: Ping und SSH kommen herein, alles andere halten Firewall oder Policies zurück;
+- Firewall-Regel entfernt, TECHO5s NetBird eingeschaltet: NetBird gestoppt, und wieder da, sobald
+  behoben;
+- NetBird oder das Add-on abgeschossen, Gerät neu gestartet: wieder gestartet, rund 20 s nach dem
+  Booten verbunden;
+- Routen: mit dem Heim-LAN in der Liste war ein Rechner dort über `netbird0` erreichbar; mit einem
+  anderen Netz in der Liste wurde ein von Hand ausgewähltes Heim-LAN binnen Sekunden wieder abgewählt;
+  `--clear` nahm die Route weg; zu weite Netze, IPv6 und die eigenen Netze des Geräts wurden
+  abgelehnt.
+
+Noch nicht getestet: Anmelden mit einem neuen Setup-Key und ein TECHO5-Update mit laufendem Add-on.
+
 ## Was du brauchst
 
 - TECHO5 mit eingeschaltetem SSH und hinterlegtem Schlüssel (Einstellungen auf dem Gerät oder die
