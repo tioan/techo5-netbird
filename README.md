@@ -164,7 +164,7 @@ looks again every minute.
 - **TECHO5 updates** leave the add-on alone: it lives on userdata, and `rc.local` starts it again.
 - **Add-on updates:** run `python3 tools/install.py <device>` again (after a `git pull`). It replaces
   the old one and starts again; the peer and the settings are kept. A release that pins a newer
-  NetBird downloads it, and removes the old one.
+  NetBird downloads it, and removes the old one. What changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Uninstall
 

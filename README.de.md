@@ -177,7 +177,7 @@ TECHO5s NetBird oder Tailscale eingeschaltet), wartet es und prüft jede Minute 
 - **Add-on-Updates:** Nach einem `git pull` einfach `python3 tools/install.py <gerät>` erneut
   ausführen. Die neue Version ersetzt die alte und startet neu, Peer und Einstellungen bleiben
   erhalten. Legt ein Release eine neuere NetBird-Version fest, wird sie heruntergeladen und die alte
-  entfernt.
+  entfernt. Was sich geändert hat, steht in [CHANGELOG.md](CHANGELOG.md) (auf Englisch).
 
 ## Deinstallation
 

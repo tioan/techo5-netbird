@@ -26,4 +26,15 @@ jobs:
       - name: publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/techo5-netbird dist/techo5-netbird.sha256 --title "$GITHUB_REF_NAME" --notes "Pins NetBird's client $(grep -o 'clientVersion = "[^"]*"' client.go | cut -d'"' -f2). Compare the SHA-256 before you install: $(cut -d' ' -f1 dist/techo5-netbird.sha256)"
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # This version's section of CHANGELOG.md, without its heading.
+          awk -v v="$version" '
+            /^## \[/ { if (on) exit; on = index($0, "## [" v "]") == 1; next }
+            on && !/^\[[^]]*\]: /' CHANGELOG.md > dist/notes.md
+          test -s dist/notes.md || { echo "CHANGELOG.md has no section for $version"; exit 1; }
+          client=$(grep -o 'clientVersion = "[^"]*"' client.go | cut -d'"' -f2)
+          sum=$(cut -d' ' -f1 dist/techo5-netbird.sha256)
+          printf '\nPins NetBird client %s. SHA-256 of techo5-netbird: %s\n' "$client" "$sum" >> dist/notes.md
+          gh release create "$GITHUB_REF_NAME" dist/techo5-netbird dist/techo5-netbird.sha256 \
+            --title "$GITHUB_REF_NAME" --notes-file dist/notes.md
