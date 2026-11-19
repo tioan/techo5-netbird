@@ -1,0 +1,29 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: test
+        run: CGO_ENABLED=0 go test -count=1 ./...
+      - name: build
+        run: |
+          mkdir dist
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -buildvcs=false \
+            -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/techo5-netbird .
+          cd dist && sha256sum techo5-netbird > techo5-netbird.sha256
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/techo5-netbird dist/techo5-netbird.sha256 --title "$GITHUB_REF_NAME" --notes "Pins NetBird's client $(grep -o 'clientVersion = "[^"]*"' client.go | cut -d'"' -f2). Compare the SHA-256 before you install: $(cut -d' ' -f1 dist/techo5-netbird.sha256)"

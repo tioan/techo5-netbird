@@ -1,0 +1,19 @@
+techo5-netbird
+Copyright (c) 2026 tioan. MIT License, see LICENSE.
+
+NetBird
+  The add-on downloads NetBird's client at run time from NetBird's own GitHub
+  releases (https://github.com/netbirdio/netbird). It is not part of this
+  repository or its releases. NetBird's client is BSD-3-Clause licensed; its
+  licenses come with the download and are kept beside the client on the device
+  (/data/techo5-netbird/client/LICENSE, LICENSES/).
+
+TECHO5
+  Parts are adapted from TECHO5 (https://github.com/HuskerMinion/techo5),
+  MIT License, Copyright (c) 2026 TECHO5 contributors: how its built-in NetBird
+  ran the client (daemon.go, client.go, the profile edit in profile.go), its
+  host name rules (device.go) and firewall check (device.go), and the routes
+  from the mesh of HuskerMinion/techo5#603 (routes.go).
+
+Go modules
+  golang.org/x/crypto/x509roots/fallback, BSD-3-Clause, Copyright The Go Authors.
