@@ -418,6 +418,8 @@ func uninstall(args []string) error {
 		fmt.Println("the supervisor is stopped")
 	}
 	stopDaemons(sockPath())
+	// The run folder holds only the stopped supervisor's lock, status and socket.
+	_ = os.RemoveAll(runDir)
 	if !purge {
 		fmt.Printf("the peer's identity is kept in %s; techo5-netbird uninstall --purge deletes it\n", stateDir())
 		return nil
@@ -425,7 +427,6 @@ func uninstall(args []string) error {
 	if err := os.RemoveAll(home); err != nil {
 		return err
 	}
-	_ = os.RemoveAll(runDir)
 	fmt.Printf("%s deleted. Remove the device under Peers in your NetBird dashboard too.\n", home)
 	return nil
 }
