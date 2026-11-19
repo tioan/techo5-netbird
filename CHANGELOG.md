@@ -6,6 +6,13 @@ All notable changes to techo5-netbird. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `tools/install.py` shows the status at once on a device with no peer yet, instead of waiting a
+  minute for a connection that cannot come.
+- The READMEs list the tests since 0.1.0: a fresh join with a new setup key, and a TECHO5 update
+  (v1.6.45 to v1.6.46) with the add-on running.
+
 ## [0.1.0] - 2026-11-19
 
 The first release: NetBird for TECHO5 devices as an add-on outside TECHO5, as proposed in

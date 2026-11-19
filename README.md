@@ -44,14 +44,16 @@ What was checked on that device, with a self-hosted management server:
 
 - install, and `migrate` of a peer from TECHO5's built-in NetBird: same name and address, the profile
   unchanged;
+- `join` with a new setup key: a new peer, connected; the key in no file and not in the log;
 - over the mesh: ping and SSH in, everything else held back by the firewall or the policies;
 - the firewall rule taken away, TECHO5's NetBird switched on: NetBird stopped, and back once fixed;
 - NetBird or the add-on killed, the device rebooted: started again, connected some 20 s after boot;
 - routes: with the home LAN listed, a host there was reached through `netbird0`; with another network
   listed, a home LAN selected by hand was dropped again within seconds; `--clear` took the route
-  away; networks that are too wide, IPv6 or the device's own were refused.
-
-Not tested yet: joining with a new setup key, and a TECHO5 update with the add-on on.
+  away; networks that are too wide, IPv6 or the device's own were refused;
+- a TECHO5 update (v1.6.45 to v1.6.46) with the add-on on: after the reboot `rc.local` started it
+  again, connected within 20 s, with its peer, settings and the firewall rule unchanged;
+- `tools/install.py`: a new install with `migrate`, and an update over a joined add-on.
 
 ## What you need
 

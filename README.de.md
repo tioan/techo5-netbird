@@ -46,6 +46,8 @@ Auf diesem Gerät geprüft, mit einem selbst betriebenen Management-Server:
 
 - Installation und Übernahme (`migrate`) des Peers aus TECHO5s eingebautem NetBird: Name und Adresse
   bleiben gleich, das Profil bleibt unverändert.
+- Beitritt (`join`) mit einem neuen Setup-Key: Ein neuer Peer entsteht und verbindet sich. Der Key
+  landet in keiner Datei und nicht im Log.
 - Über das Mesh kommen Ping und SSH an, alles andere blockieren Firewall oder Policies.
 - Fehlt die Firewall-Regel oder ist TECHO5s NetBird eingeschaltet, stoppt NetBird. Ist das behoben,
   läuft es wieder.
@@ -55,8 +57,10 @@ Auf diesem Gerät geprüft, mit einem selbst betriebenen Management-Server:
   anderes Netz freigegeben, wurde ein von Hand ausgewähltes Heimnetz nach wenigen Sekunden wieder
   abgewählt. `--clear` entfernte die Route. Zu große Netze, IPv6 und die eigenen Netze des Geräts
   wurden abgelehnt.
-
-Noch nicht getestet: der Beitritt mit einem neuen Setup-Key und ein TECHO5-Update bei laufendem Add-on.
+- TECHO5-Update (von v1.6.45 auf v1.6.46) bei laufendem Add-on: Nach dem Neustart startet `rc.local`
+  das Add-on wieder, es ist binnen 20 Sekunden verbunden. Peer, Einstellungen und Firewall-Regel
+  bleiben unverändert.
+- `tools/install.py`: Neuinstallation mit Übernahme des Peers und Update eines verbundenen Add-ons.
 
 ## Voraussetzungen
 

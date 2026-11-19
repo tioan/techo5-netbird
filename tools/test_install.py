@@ -65,6 +65,7 @@ class DeviceTest(unittest.TestCase):
         c = install.status_command()
         self.assertIn('Connected', c)
         self.assertTrue(c.endswith(install.REMOTE_BIN + ' status'))
+        self.assertEqual(install.status_command(wait=False), install.REMOTE_BIN + ' status')
 
     def test_parse_probe(self):
         s = install.parse_probe('installed\njoined\nbuiltin-peer\naarch64\n')

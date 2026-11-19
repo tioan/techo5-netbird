@@ -144,8 +144,11 @@ def install_command():
             f'rc=$?; rm -f {REMOTE_TMP}; exit $rc')
 
 
-def status_command():
-    """The add-on's status, once NetBird is connected or after a minute, whichever is first."""
+def status_command(wait=True):
+    """The add-on's status: once NetBird is connected or after a minute, whichever is first, or at once
+    on a device with no peer yet, which has nothing to connect with."""
+    if not wait:
+        return f'{REMOTE_BIN} status'
     return (f'i=0; while [ $i -lt 30 ] && ! {REMOTE_BIN} status | grep -q "^netbird: *Connected"; '
             f'do sleep 2; i=$((i+1)); done; {REMOTE_BIN} status')
 
@@ -259,7 +262,7 @@ def main(argv=None):
         elif not state['joined']:
             print(f'Later: ssh {ssh_target(args.device)} {REMOTE_BIN} migrate, or ssh -t … join')
 
-        run(ssh_cmd(args, status_command()))
+        run(ssh_cmd(args, status_command(wait=bool(step) or state['joined'])))
         return 0
     except Fail as e:
         print(f'techo5-netbird install: {e}', file=sys.stderr)
