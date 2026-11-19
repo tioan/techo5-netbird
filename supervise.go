@@ -122,7 +122,6 @@ func runSupervisor() error {
 		backoff = s.backoff(ctx, backoff)
 	}
 	s.publish(func(st *supervisorStatus) { *st = supervisorStatus{Problem: "stopped"} })
-	logf("stopped")
 	return nil
 }
 

@@ -220,7 +220,7 @@ func join(args []string) error {
 		return fmt.Errorf("joining: %s", orElse(lastLine(scrub(out, key)), err.Error()))
 	}
 	logf("joining as %s at %s", name, shownURL(mgmt))
-	cfg.Management = mgmt
+	cfg.Management, cfg.Joined = mgmt, true
 	if mgmt == defaultManagement {
 		cfg.Management = ""
 	}
@@ -346,7 +346,11 @@ func migrate() error {
 	if _, err := os.Stat(builtinState() + "/default.json"); err != nil {
 		return fmt.Errorf("there is no peer of TECHO5's NetBird to take over (%s)", builtinState())
 	}
-	if _, err := os.Stat(profilePath()); err == nil {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+	if cfg.Joined {
 		return fmt.Errorf("the add-on has a peer of its own already (%s); techo5-netbird uninstall --purge first to replace it", stateDir())
 	}
 	if pid := supervisorPID(); pid != 0 {
@@ -357,15 +361,12 @@ func migrate() error {
 	if err := os.MkdirAll(home, 0o755); err != nil {
 		return err
 	}
-	_ = os.RemoveAll(stateDir()) // only what an unjoined daemon left
+	// The daemon makes a profile of its own when it first starts, with no peer behind it: that goes.
+	_ = os.RemoveAll(stateDir())
 	if err := moveDir(builtinState(), stateDir()); err != nil {
 		return fmt.Errorf("moving the peer: %w", err)
 	}
-	cfg, err := loadConfig()
-	if err != nil {
-		return err
-	}
-	cfg.Management = s.Netbird.Management
+	cfg.Management, cfg.Joined = s.Netbird.Management, true
 	if err := saveConfig(cfg); err != nil {
 		return err
 	}

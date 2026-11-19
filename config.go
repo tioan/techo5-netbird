@@ -15,6 +15,9 @@ import (
 type config struct {
 	// Management is the management server the device was joined to: NetBird's own when empty.
 	Management string `json:"management,omitempty"`
+	// Joined is whether the add-on's peer was ever joined, by join or migrate. Until then, what the daemon
+	// keeps in the state folder is a profile it made for itself, with no peer behind it.
+	Joined bool `json:"joined,omitempty"`
 	// Routes are the networks the device may take routes from the mesh to (routes.go): none at first,
 	// and then it takes no routes at all.
 	Routes []string `json:"routes,omitempty"`

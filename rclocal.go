@@ -64,7 +64,8 @@ func withoutBlock(s string) string {
 	return strings.Join(out, "")
 }
 
-// editRC changes rc.local with fn, keeps it executable, and leaves it alone when nothing changes.
+// editRC changes rc.local with fn, keeps it executable, and leaves it alone when nothing changes. A script
+// left with nothing but its shebang, as install made it, is removed: TECHO5 starts nothing then.
 func editRC(fn func(string) string) (changed bool, err error) {
 	b, err := os.ReadFile(rcLocal)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -75,6 +76,9 @@ func editRC(fn func(string) string) (changed bool, err error) {
 		mode = info.Mode().Perm() | 0o700
 	}
 	out := fn(string(b))
+	if len(b) > 0 && strings.TrimSpace(out) == "#!/bin/sh" {
+		return true, os.Remove(rcLocal)
+	}
 	if out == string(b) {
 		if len(b) > 0 {
 			return false, os.Chmod(rcLocal, mode)

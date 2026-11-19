@@ -174,6 +174,18 @@ func TestRCBlock(t *testing.T) {
 	if b, _ := os.ReadFile(rcLocal); string(b) != other {
 		t.Errorf("after uninstall: %q", b)
 	}
+
+	// A script install made goes again with uninstall.
+	os.Remove(rcLocal)
+	if changed, err := editRC(withBlock); err != nil || !changed {
+		t.Fatal(changed, err)
+	}
+	if changed, err := editRC(withoutBlock); err != nil || !changed {
+		t.Fatal(changed, err)
+	}
+	if _, err := os.Stat(rcLocal); !os.IsNotExist(err) {
+		t.Errorf("rc.local left: %v", err)
+	}
 }
 
 func TestHostname(t *testing.T) {
@@ -357,11 +369,11 @@ func TestConfigRoundTrip(t *testing.T) {
 	if err != nil || c.Management != "" || c.Routes != nil {
 		t.Fatal(c, err)
 	}
-	if err := saveConfig(config{Management: "https://nb.example.com", Routes: []string{"192.168.1.0/24"}}); err != nil {
+	if err := saveConfig(config{Management: "https://nb.example.com", Joined: true, Routes: []string{"192.168.1.0/24"}}); err != nil {
 		t.Fatal(err)
 	}
 	c, err = loadConfig()
-	if err != nil || c.Management != "https://nb.example.com" || !slices.Equal(c.Routes, []string{"192.168.1.0/24"}) {
+	if err != nil || c.Management != "https://nb.example.com" || !c.Joined || !slices.Equal(c.Routes, []string{"192.168.1.0/24"}) {
 		t.Fatal(c, err)
 	}
 	if fi, _ := os.Stat(configPath()); fi.Mode().Perm() != 0o600 {
