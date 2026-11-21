@@ -6,8 +6,15 @@ All notable changes to techo5-netbird. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-21
+
+For TECHO5 v1.6.47, which took the built-in NetBird out and keeps its peer for `migrate`.
+
 ### Changed
 
+- `tools/install.py` asks you to turn TECHO5's NetBird switch off only when it is on, and `migrate`
+  advises leaving it off only on TECHO5 up to v1.6.46: from v1.6.47 there is no switch.
+- The READMEs say what changes with v1.6.47 and list the TECHO5 releases the add-on was tested on.
 - `tools/install.py` shows the status at once on a device with no peer yet, instead of waiting a
   minute for a connection that cannot come.
 - The READMEs list the tests since 0.1.0: a fresh join with a new setup key, and a TECHO5 update
@@ -37,5 +44,6 @@ The first release: NetBird for TECHO5 devices as an add-on outside TECHO5, as pr
 - READMEs in English and German, and [docs/client-binary.md](https://github.com/tioan/techo5-netbird/blob/main/docs/client-binary.md) on why the add-on
   uses NetBird's own binary.
 
-[Unreleased]: https://github.com/tioan/techo5-netbird/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/tioan/techo5-netbird/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/tioan/techo5-netbird/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/tioan/techo5-netbird/releases/tag/v0.1.0

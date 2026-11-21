@@ -68,10 +68,23 @@ class DeviceTest(unittest.TestCase):
         self.assertEqual(install.status_command(wait=False), install.REMOTE_BIN + ' status')
 
     def test_parse_probe(self):
-        s = install.parse_probe('installed\njoined\nbuiltin-peer\naarch64\n')
-        self.assertEqual(s, dict(installed=True, joined=True, builtin_peer=True, arch_ok=True))
+        s = install.parse_probe('installed\njoined\nbuiltin-peer\nbuiltin-on\naarch64\n')
+        self.assertEqual(s, dict(installed=True, joined=True, builtin_peer=True, builtin_on=True, arch_ok=True))
         s = install.parse_probe('armv7l\n')
-        self.assertEqual(s, dict(installed=False, joined=False, builtin_peer=False, arch_ok=False))
+        self.assertEqual(s, dict(installed=False, joined=False, builtin_peer=False, builtin_on=False, arch_ok=False))
+
+    def test_probe_finds_the_switch_on(self):
+        # The probe's own grep, against the ways state.json has its NetBird section.
+        import subprocess
+        line = [l for l in install.PROBE.split('; ') if 'builtin-on' in l][0]
+        pattern = line.split("grep -q '")[1].split("'")[0]
+        for text, want in (('"netbird": {\n    "on": true,\n    "management": "x"\n  }', True),
+                           ('"netbird":{"joined":true,"management":"x"}', False),
+                           ('"netbird": {"on": false}', False),
+                           ('"tailscale": {"on": true}, "netbird": {}', False)):
+            squeezed = ''.join(text.split())
+            got = subprocess.run(['grep', '-q', pattern], input=squeezed, text=True).returncode == 0
+            self.assertEqual(got, want, text)
 
     def test_next_step(self):
         new = dict(installed=False, joined=False, builtin_peer=True, arch_ok=True)

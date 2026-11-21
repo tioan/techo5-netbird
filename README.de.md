@@ -61,6 +61,21 @@ Auf diesem Gerät geprüft, mit einem selbst betriebenen Management-Server:
   das Add-on wieder, es ist binnen 20 Sekunden verbunden. Peer, Einstellungen und Firewall-Regel
   bleiben unverändert.
 - `tools/install.py`: Neuinstallation mit Übernahme des Peers und Update eines verbundenen Add-ons.
+- Update auf TECHO5 v1.6.47, das das eingebaute NetBird entfernt: Peer und Management-Server bleiben
+  für `migrate` erhalten, danach ist derselbe Peer mit gleichem Namen und gleicher Adresse wieder da.
+
+### Getestete TECHO5-Versionen
+
+Alle auf dem Echo Show 8 (2. Generation):
+
+| TECHO5 | Add-on | Getestet |
+|---|---|---|
+| v1.6.45 | v0.1.0 (Test-Builds) | Installation, `migrate`, `join` mit neuem Setup-Key, Policies, Firewall- und Konfliktprüfung, Neustarts und Reboot, Routen aus dem Mesh, `tools/install.py` |
+| v1.6.45 → v1.6.46 | v0.1.0 | TECHO5-Update bei laufendem Add-on: über `rc.local` wieder gestartet und verbunden, Peer, Einstellungen und Firewall-Regel unverändert |
+| v1.6.46 → v1.6.47 | v0.1.0 | Entfernen des eingebauten NetBird beim Update, danach `tools/install.py` mit `migrate`: derselbe Peer, Policies, ein Reboot |
+| v1.6.47 | v0.1.1 | Update des Add-ons über v0.1.0: Peer bleibt, keine Frage nach einem NetBird-Schalter |
+
+Versionen vor v1.6.45 sind nicht getestet.
 
 ## Voraussetzungen
 
@@ -68,8 +83,10 @@ Auf diesem Gerät geprüft, mit einem selbst betriebenen Management-Server:
   die Setup-Seite).
 - Ein **Verschlüsselungsschlüssel** für die Verbindung zwischen Home Assistant und dem Gerät. Ohne ihn
   startet das Add-on NetBird nicht, denn sonst liefe die Verbindung über NetBird unverschlüsselt.
-- TECHO5s eingebautes NetBird und Tailscale sind **aus**. NetBird und Tailscale vergeben beide Adressen
-  aus 100.64.0.0/10 und können nicht gleichzeitig laufen.
+- Bis TECHO5 v1.6.46 ist das eingebaute NetBird **aus**. Ab v1.6.47 gibt es keins mehr: Das Update
+  schaltet es ab und hebt seinen Peer für `migrate` auf.
+- Tailscale ist aus. NetBird und Tailscale vergeben beide Adressen aus 100.64.0.0/10 und können nicht
+  gleichzeitig laufen.
 - Etwa 60 MB freier Speicher auf userdata und rund 110 MB Arbeitsspeicher im Betrieb.
 
 ## Installation
@@ -102,13 +119,17 @@ aber kein Release, das nicht von diesem Projekt stammt.
 ### Gerät mit TECHO5s eingebautem NetBird
 
 Der bisherige Peer bleibt erhalten, ein neuer Setup-Key ist nicht nötig: Bestätige die Übernahme, wenn
-das Skript sie anbietet, und schalte TECHO5s **NetBird** aus (auf dem Display oder in Home Assistant),
-sobald es dich dazu auffordert.
+das Skript sie anbietet. Das klappt vor und nach dem Update auf TECHO5 v1.6.47 gleich, denn v1.6.47
+entfernt zwar das eingebaute NetBird, hebt aber seinen Peer auf.
 
 Das Skript führt dann `migrate` auf dem Gerät aus. Dabei wandert die Identität des Peers samt
-Management-Server aus TECHO5s NetBird-Ordner in den des Add-ons. Lass TECHO5s NetBird danach
-ausgeschaltet: Eingeschaltet bräuchte es einen neuen Key, und das Add-on hält NetBird an, solange es
-an ist.
+Management-Server aus TECHO5s NetBird-Ordner in den des Add-ons.
+
+- **Bis v1.6.46** muss TECHO5s **NetBird** vorher aus sein. Ist es noch an, fordert dich das Skript
+  auf, es auszuschalten (auf dem Display oder in Home Assistant). Lass es danach aus: Eingeschaltet
+  bräuchte es einen neuen Key, und das Add-on hält NetBird an, solange es an ist.
+- **Ab v1.6.47** gibt es keinen Schalter mehr. Home Assistant zeigt den alten NetBird-Schalter und
+  -Status als nicht verfügbar an; du kannst beide dort löschen.
 
 ### Neues Gerät
 

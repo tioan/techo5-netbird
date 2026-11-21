@@ -48,6 +48,8 @@ PROBE = (
     f'[ -x {REMOTE_BIN} ] && echo installed; '
     'grep -q \'"joined": *true\' /data/techo5-netbird/config.json 2>/dev/null && echo joined; '
     '[ -f /data/misc/techo5/netbird/state/default.json ] && echo builtin-peer; '
+    # TECHO5's own NetBird switch, on: up to v1.6.46 only, where it has one.
+    'tr -d " \\n\\t" < /data/misc/techo5/state.json 2>/dev/null | grep -q \'"netbird":{[^}]*"on":true\' && echo builtin-on; '
     'uname -m; true'
 )
 
@@ -159,6 +161,7 @@ def parse_probe(out):
         'installed': 'installed' in words,
         'joined': 'joined' in words,
         'builtin_peer': 'builtin-peer' in words,
+        'builtin_on': 'builtin-on' in words,
         'arch_ok': 'aarch64' in words or 'arm64' in words,
     }
 
@@ -243,7 +246,8 @@ def main(argv=None):
             if state['builtin_peer'] and ask('This device has a peer of TECHO5\'s built-in NetBird. '
                                              'Move it over to the add-on, keeping its name and address?'):
                 step = 'migrate'
-                input('Turn TECHO5\'s NetBird switch off (on the screen or in Home Assistant), then press Enter. ')
+                if state['builtin_on']:
+                    input('Turn TECHO5\'s NetBird switch off (on the screen or in Home Assistant), then press Enter. ')
             elif ask('Join your NetBird network now, with a setup key?'):
                 step = 'join'
                 if not args.management:

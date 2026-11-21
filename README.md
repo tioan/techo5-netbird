@@ -53,15 +53,32 @@ What was checked on that device, with a self-hosted management server:
   away; networks that are too wide, IPv6 or the device's own were refused;
 - a TECHO5 update (v1.6.45 to v1.6.46) with the add-on on: after the reboot `rc.local` started it
   again, connected within 20 s, with its peer, settings and the firewall rule unchanged;
-- `tools/install.py`: a new install with `migrate`, and an update over a joined add-on.
+- `tools/install.py`: a new install with `migrate`, and an update over a joined add-on;
+- the upgrade to TECHO5 v1.6.47, which took the built-in NetBird out: the peer and the management
+  server were kept for `migrate`, which brought back the same peer, name and address.
+
+### TECHO5 releases tested
+
+All on the Echo Show 8 (2nd gen):
+
+| TECHO5 | Add-on | What was tested |
+|---|---|---|
+| v1.6.45 | v0.1.0 (test builds) | install, `migrate`, `join` with a new setup key, policies, the firewall and conflict checks, restarts and a reboot, routes from the mesh, `tools/install.py` |
+| v1.6.45 → v1.6.46 | v0.1.0 | TECHO5 update with the add-on running: started again from `rc.local` and connected, peer, settings and firewall rule unchanged |
+| v1.6.46 → v1.6.47 | v0.1.0 | the built-in NetBird's removal on the update, then `tools/install.py` with `migrate`: same peer, policies, a reboot |
+| v1.6.47 | v0.1.1 | an update of the add-on over v0.1.0: peer kept, no question about a NetBird switch |
+
+Releases before v1.6.45 have not been tried.
 
 ## What you need
 
 - TECHO5 with SSH on and your key set (Settings on the device, or the setup page).
 - An **encryption key** on Home Assistant's link to the device. Without one, the add-on does not start
   NetBird: over NetBird, the link would be open in the clear.
-- TECHO5's own NetBird **off**, and Tailscale off. NetBird and Tailscale both number their devices in
-  100.64.0.0/10 and cannot run side by side.
+- Up to TECHO5 v1.6.46: TECHO5's own NetBird **off**. From v1.6.47 there is none: the update turns it
+  off and keeps its peer for `migrate`.
+- Tailscale off. NetBird and Tailscale both number their devices in 100.64.0.0/10 and cannot run side
+  by side.
 - About 60 MB free on userdata, and some 110 MB of memory while it runs.
 
 ## Install
@@ -93,12 +110,18 @@ release that is not this project's.
 
 ### A device already on TECHO5's built-in NetBird
 
-Keep the same peer, with no new setup key: answer yes when the script offers to move it over, and turn
-TECHO5's **NetBird** switch off (on the screen or in Home Assistant) when it asks you to.
+Keep the same peer, with no new setup key: answer yes when the script offers to move it over. This
+works the same before and after the update to TECHO5 v1.6.47, which took the built-in NetBird out but
+kept its peer.
 
 The script then runs `migrate` on the device. It moves the peer's identity from TECHO5's NetBird folder
-to the add-on's, with the management server it was joined to. Leave TECHO5's NetBird switch off from
-then on: turned on, it would need a new key, and the add-on stops NetBird while it is on.
+to the add-on's, with the management server it was joined to.
+
+- **Up to v1.6.46**, TECHO5's **NetBird** switch has to be off first: the script asks you to turn it
+  off (on the screen or in Home Assistant) when it is on. Leave it off from then on: turned on, it
+  would need a new key, and the add-on stops NetBird while it is on.
+- **From v1.6.47** there is no switch. Home Assistant shows the old NetBird switch and status as
+  unavailable; delete them there.
 
 ### A new device
 

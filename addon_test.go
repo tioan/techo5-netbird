@@ -424,3 +424,44 @@ func TestRotating(t *testing.T) {
 		t.Errorf("kept log %v %v", fi, err)
 	}
 }
+
+func TestReleaseVersion(t *testing.T) {
+	for line, want := range map[string][3]int{
+		"techo5 rootfs v1.6.47 built 2026-11-21T03:08Z, daemon echod version v1.6.47 (53e11da)": {1, 6, 47},
+		"techo5 rootfs v1.10.0 built x": {1, 10, 0},
+	} {
+		if v, ok := releaseVersion(line); !ok || v != want {
+			t.Errorf("%q: %v %v, want %v", line, v, ok, want)
+		}
+	}
+	for _, line := range []string{"", "techo5 rootfs dev", "v1.6", "vx.y.z"} {
+		if _, ok := releaseVersion(line); ok {
+			t.Errorf("%q: a version, want none", line)
+		}
+	}
+}
+
+func TestHasNetbirdSwitch(t *testing.T) {
+	d := t.TempDir()
+	was := releaseFile
+	t.Cleanup(func() { releaseFile = was })
+	releaseFile = filepath.Join(d, "missing")
+	if !hasNetbirdSwitch() {
+		t.Error("no release file: want the switch assumed")
+	}
+	for release, want := range map[string]bool{
+		"techo5 rootfs v1.6.46 built x": true,
+		"techo5 rootfs v1.6.47 built x": false,
+		"techo5 rootfs v1.7.0 built x":  false,
+		"techo5 rootfs v0.9.99 built x": true,
+		"something else":                true,
+	} {
+		releaseFile = filepath.Join(d, "release")
+		if err := os.WriteFile(releaseFile, []byte(release+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if got := hasNetbirdSwitch(); got != want {
+			t.Errorf("%q: %v, want %v", release, got, want)
+		}
+	}
+}

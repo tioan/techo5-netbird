@@ -374,7 +374,9 @@ func migrate() error {
 		return err
 	}
 	fmt.Printf("TECHO5's NetBird peer moved to %s (management: %s)\n", stateDir(), shownURL(orElse(cfg.Management, defaultManagement)))
-	fmt.Println("Leave TECHO5's own NetBird switch off from now on: that NetBird would need a new key, and both cannot run.")
+	if hasNetbirdSwitch() {
+		fmt.Println("Leave TECHO5's own NetBird switch off from now on: that NetBird would need a new key, and both cannot run.")
+	}
 	if _, err := os.Stat(selfPath()); err == nil && supervisorPID() == 0 {
 		if err := startDetached(); err != nil {
 			return fmt.Errorf("starting the supervisor: %w", err)

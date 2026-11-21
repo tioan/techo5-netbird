@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -95,6 +96,55 @@ var conflict = func() error {
 		return errors.New("Tailscale's interface is up: Tailscale and NetBird can claim the same addresses")
 	}
 	return nil
+}
+
+// noSwitchSince is the TECHO5 release that took the built-in NetBird out, and its switch with it (#580).
+var noSwitchSince = [3]int{1, 6, 47}
+
+// hasNetbirdSwitch says whether this TECHO5 still has a NetBird switch of its own: up to v1.6.46, and
+// when the release cannot be read, which is the safe answer for advice to leave it off.
+func hasNetbirdSwitch() bool {
+	b, err := os.ReadFile(releaseFile)
+	if err != nil {
+		return true
+	}
+	v, ok := releaseVersion(string(b))
+	if !ok {
+		return true
+	}
+	for i := range v {
+		if v[i] != noSwitchSince[i] {
+			return v[i] < noSwitchSince[i]
+		}
+	}
+	return false
+}
+
+// releaseVersion is the version in TECHO5's release line, "techo5 rootfs v1.6.47 built …".
+func releaseVersion(line string) ([3]int, bool) {
+	var v [3]int
+	for _, f := range strings.Fields(line) {
+		if !strings.HasPrefix(f, "v") {
+			continue
+		}
+		parts := strings.Split(strings.TrimPrefix(f, "v"), ".")
+		if len(parts) != 3 {
+			continue
+		}
+		ok := true
+		for i, p := range parts {
+			n, err := strconv.Atoi(p)
+			if err != nil || n < 0 {
+				ok = false
+				break
+			}
+			v[i] = n
+		}
+		if ok {
+			return v, true
+		}
+	}
+	return v, false
 }
 
 // preflight is every check that must pass before NetBird runs.

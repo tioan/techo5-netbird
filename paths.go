@@ -19,6 +19,8 @@ var (
 	// runDir holds what lasts only while the device is up: the supervisor's lock, pid and status, and
 	// the daemon's socket.
 	runDir = "/run/techo5-netbird"
+	// releaseFile names the TECHO5 release the device runs ("techo5 rootfs v1.6.47 built …").
+	releaseFile = "/etc/techo5-release"
 )
 
 func binDir() string      { return filepath.Join(home, "bin") }
