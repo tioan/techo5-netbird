@@ -19,16 +19,21 @@ def args(**kw):
 class ReleaseTest(unittest.TestCase):
     def test_urls(self):
         self.assertEqual(install.release_urls(None), (
-            'https://github.com/tioan/techo5-netbird/releases/latest/download/techo5-netbird',
-            'https://github.com/tioan/techo5-netbird/releases/latest/download/techo5-netbird.sha256'))
-        self.assertEqual(install.release_urls('v0.1.0')[0],
-                         'https://github.com/tioan/techo5-netbird/releases/download/v0.1.0/techo5-netbird')
+            'https://github.com/tioan/techo5-netbird/releases/latest/download/techo5-netbird-arm64',
+            'https://github.com/tioan/techo5-netbird/releases/latest/download/SHA256SUMS',
+            'techo5-netbird-arm64'))
+        self.assertEqual(install.release_urls('v0.1.0', legacy=True), (
+            'https://github.com/tioan/techo5-netbird/releases/download/v0.1.0/techo5-netbird',
+            'https://github.com/tioan/techo5-netbird/releases/download/v0.1.0/techo5-netbird.sha256',
+            'techo5-netbird'))
 
     def test_parse_sha256(self):
-        h = 'ab' * 32
-        self.assertEqual(install.parse_sha256(f'{h}  techo5-netbird\n'), h)
-        self.assertEqual(install.parse_sha256(f'{h.upper()} *techo5-netbird'), h)
-        for bad in ('', f'{h}  other', 'xyz  techo5-netbird', f'{h[:-2]}  techo5-netbird'):
+        h, g = 'ab' * 32, 'cd' * 32
+        sums = f'{g}  techo5-netbird-arm\n{h}  techo5-netbird-arm64\n{g}  addon.json\n'
+        self.assertEqual(install.parse_sha256(sums), h)
+        self.assertEqual(install.parse_sha256(f'{h.upper()} *techo5-netbird', 'techo5-netbird'), h)
+        for bad in ('', f'{h}  other', f'{h}  techo5-netbird-arm', 'xyz  techo5-netbird-arm64',
+                    f'{h[:-2]}  techo5-netbird-arm64'):
             with self.assertRaises(install.Fail):
                 install.parse_sha256(bad)
 
@@ -68,10 +73,12 @@ class DeviceTest(unittest.TestCase):
         self.assertEqual(install.status_command(wait=False), install.REMOTE_BIN + ' status')
 
     def test_parse_probe(self):
-        s = install.parse_probe('installed\njoined\nbuiltin-peer\nbuiltin-on\naarch64\n')
-        self.assertEqual(s, dict(installed=True, joined=True, builtin_peer=True, builtin_on=True, arch_ok=True))
+        s = install.parse_probe('installed\ncatalog\njoined\nbuiltin-peer\nbuiltin-on\naarch64\n')
+        self.assertEqual(s, dict(installed=True, joined=True, builtin_peer=True, builtin_on=True, catalog=True,
+                                 arch_ok=True))
         s = install.parse_probe('armv7l\n')
-        self.assertEqual(s, dict(installed=False, joined=False, builtin_peer=False, builtin_on=False, arch_ok=False))
+        self.assertEqual(s, dict(installed=False, joined=False, builtin_peer=False, builtin_on=False, catalog=False,
+                                 arch_ok=False))
 
     def test_probe_finds_the_switch_on(self):
         # The probe's own grep, against the ways state.json has its NetBird section.

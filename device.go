@@ -95,6 +95,13 @@ var conflict = func() error {
 	if _, err := net.InterfaceByName("tailscale0"); err == nil {
 		return errors.New("Tailscale's interface is up: Tailscale and NetBird can claim the same addresses")
 	}
+	// Installed by hand, it gives way to an install from TECHO5's add-on catalog, which takes over its
+	// peer on its first start (takeover.go): two would fight over the interface.
+	if !catalog {
+		if _, err := os.Stat(filepath.Join(catalogDir, "addon.json")); err == nil {
+			return errors.New("this add-on is installed from TECHO5's Add-ons card now, which runs it instead")
+		}
+	}
 	return nil
 }
 
@@ -147,8 +154,25 @@ func releaseVersion(line string) ([3]int, bool) {
 	return v, false
 }
 
+// kernel64 says whether the kernel runs 64-bit ARM programs, which NetBird's client (linux_arm64) is.
+// The add-on itself also comes as a 32-bit build, the one TECHO5's add-on catalog gives every device,
+// since TECHO5's own programs are 32-bit; the Echo Shows and the Echo Spot have a 64-bit kernel under it.
+var kernel64 = func() error {
+	out, err := exec.Command("uname", "-m").Output()
+	if err != nil {
+		return fmt.Errorf("reading the kernel's architecture: %w", err)
+	}
+	if m := strings.TrimSpace(string(out)); m != "aarch64" && m != "arm64" {
+		return fmt.Errorf("NetBird's client needs a 64-bit kernel, and this one is %s", m)
+	}
+	return nil
+}
+
 // preflight is every check that must pass before NetBird runs.
 func preflight() error {
+	if err := kernel64(); err != nil {
+		return err
+	}
 	if err := conflict(); err != nil {
 		return err
 	}

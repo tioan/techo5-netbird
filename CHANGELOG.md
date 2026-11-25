@@ -6,6 +6,30 @@ All notable changes to techo5-netbird. The format follows
 
 ## [Unreleased]
 
+For TECHO5's add-on catalog (TECHO5 v1.6.53 and later,
+[HuskerMinion/techo5-addons#3](https://github.com/HuskerMinion/techo5-addons/issues/3)).
+
+### Added
+
+- Installed from TECHO5's **Add-ons** card, the add-on keeps everything in the state folder TECHO5 gives
+  it, writes nothing to `rc.local`, and logs to the card. TECHO5 starts it and keeps it running.
+- There, NetBird's client archive comes from the catalog, which pins it beside the add-on
+  (`addon.json`'s `files`); the add-on checks it against its own pin and never downloads it itself.
+- On its first start without a peer, a catalog install takes over an install by hand (out of
+  `rc.local`, stopped, its peer and settings moved, `/data/techo5-netbird` deleted), or else the peer
+  TECHO5's built-in NetBird left behind.
+- An `arm` build beside `arm64`: the catalog gives every device the `arm` one, as TECHO5's own programs
+  are 32-bit. It needs a 64-bit kernel for NetBird's `linux_arm64` client, and says so on one without.
+- Each release has `addon.json`, `SHA256SUMS` and a build provenance attestation.
+
+### Changed
+
+- Release assets are `techo5-netbird-arm` and `techo5-netbird-arm64`, with `SHA256SUMS`, instead of
+  `techo5-netbird` and `techo5-netbird.sha256`. `tools/install.py` installs `techo5-netbird-arm64`, and
+  still the old names with `--version` for a release before 0.2.0.
+- An install by hand stops NetBird when a catalog install is on the device, and `install`,
+  `uninstall` and `tools/install.py` point to the card there.
+
 ## [0.1.1] - 2026-11-21
 
 For TECHO5 v1.6.47, which took the built-in NetBird out and keeps its peer for `migrate`.

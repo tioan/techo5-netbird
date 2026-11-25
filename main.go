@@ -20,9 +20,10 @@ import (
 // version is the add-on's own, set at build time.
 var version = "dev"
 
-const usage = `techo5-netbird: NetBird's client on a TECHO5 device, started at boot from rc.local.
+const usage = `techo5-netbird: NetBird's client on a TECHO5 device, started at boot by TECHO5's add-on
+manager (Add-ons card) or, installed by hand, from rc.local.
 
-  techo5-netbird install             start it at every boot, fetch NetBird's client, start it now
+  techo5-netbird install             by hand: start it at every boot, fetch NetBird's client, start it now
   techo5-netbird join [--management URL]
                                      join with a setup key, read from the terminal or stdin
   techo5-netbird status              where it stands
@@ -33,7 +34,7 @@ const usage = `techo5-netbird: NetBird's client on a TECHO5 device, started at b
   techo5-netbird uninstall [--purge] stop it and no longer start it at boot; --purge also
                                      deletes the peer's identity and everything else of it
   techo5-netbird version
-  techo5-netbird run                 the supervisor itself, as rc.local starts it
+  techo5-netbird run                 the supervisor itself, as TECHO5 or rc.local starts it
 `
 
 func main() {
@@ -42,8 +43,11 @@ func main() {
 		os.Exit(2)
 	}
 	cmd, args := os.Args[1], os.Args[2:]
-	if cmd != "run" {
-		logger.to = os.Stdout // commands run by hand say what they do on the terminal
+	setMode(cmd == "run")
+	// Started by TECHO5's add-on manager, the log goes to TECHO5, which keeps it bounded and shows it on
+	// the add-on's card; commands run by hand write to the terminal.
+	if cmd != "run" || catalog {
+		logger.to = os.Stdout
 	}
 	var err error
 	switch cmd {
@@ -82,6 +86,9 @@ func main() {
 // starts the supervisor now, so no restart is needed. Run from elsewhere (/tmp), it installs or updates
 // the add-on: the program is replaced whole, by a rename, which a running one does not stand in the way of.
 func install() error {
+	if catalog {
+		return errCatalog
+	}
 	if err := os.MkdirAll(binDir(), 0o755); err != nil {
 		return err
 	}
@@ -259,6 +266,8 @@ func showStatus() error {
 	_, rcErr := os.Stat(rcLocal)
 	b, _ := os.ReadFile(rcLocal)
 	switch {
+	case catalog:
+		fmt.Println("at boot:     started by TECHO5's add-on manager (Add-ons card)")
 	case rcErr == nil && strings.Contains(string(b), rcBegin):
 		fmt.Println("at boot:     started from rc.local")
 	default:
@@ -335,19 +344,11 @@ func routesCmd(args []string) error {
 
 // migrate moves TECHO5's built-in NetBird's peer identity to the add-on, with the management server it
 // was joined to: the device stays the same peer, and needs no new key. TECHO5's NetBird must be off.
+// An install from TECHO5's add-on catalog does this by itself on its first start (takeover.go).
 func migrate() error {
-	s, err := readTecho5()
+	s, err := builtinPeer()
 	if err != nil {
-		return fmt.Errorf("reading TECHO5's settings: %w", err)
-	}
-	if s.Netbird.On {
-		return errors.New("TECHO5's own NetBird is on: turn its NetBird switch off first (on the screen or in Home Assistant)")
-	}
-	if pids := daemonsOn(builtinSock); len(pids) > 0 {
-		return fmt.Errorf("TECHO5's NetBird daemon is still running (pid %d): wait a moment and try again", pids[0])
-	}
-	if _, err := os.Stat(builtinState() + "/default.json"); err != nil {
-		return fmt.Errorf("there is no peer of TECHO5's NetBird to take over (%s)", builtinState())
+		return err
 	}
 	cfg, err := loadConfig()
 	if err != nil {
@@ -357,25 +358,21 @@ func migrate() error {
 		return fmt.Errorf("the add-on has a peer of its own already (%s); techo5-netbird uninstall --purge first to replace it", stateDir())
 	}
 	if pid := supervisorPID(); pid != 0 {
-		// Its daemon, not joined yet, holds the state folder: stopped, and started again below.
+		// Its daemon, not joined yet, holds the state folder: stopped, and started again below (or by
+		// TECHO5's add-on manager, which keeps a catalog install running).
 		_ = syscall.Kill(pid, syscall.SIGTERM)
 		waitGone(pid)
 	}
-	if err := os.MkdirAll(home, 0o755); err != nil {
-		return err
-	}
-	// The daemon makes a profile of its own when it first starts, with no peer behind it: that goes.
-	_ = os.RemoveAll(stateDir())
-	if err := moveDir(builtinState(), stateDir()); err != nil {
-		return fmt.Errorf("moving the peer: %w", err)
-	}
-	cfg.Management, cfg.Joined = s.Netbird.Management, true
-	if err := saveConfig(cfg); err != nil {
+	if cfg, err = takeBuiltin(s, cfg); err != nil {
 		return err
 	}
 	fmt.Printf("TECHO5's NetBird peer moved to %s (management: %s)\n", stateDir(), shownURL(orElse(cfg.Management, defaultManagement)))
 	if hasNetbirdSwitch() {
 		fmt.Println("Leave TECHO5's own NetBird switch off from now on: that NetBird would need a new key, and both cannot run.")
+	}
+	if catalog {
+		fmt.Println("TECHO5's add-on manager starts it again in a moment")
+		return nil
 	}
 	if _, err := os.Stat(selfPath()); err == nil && supervisorPID() == 0 {
 		if err := startDetached(); err != nil {
@@ -405,7 +402,14 @@ func waitGone(pid int) {
 }
 
 // uninstall takes the add-on out of rc.local and stops it. Its peer is kept unless --purge.
+// errCatalog is what install and uninstall answer on an install from TECHO5's add-on catalog, which
+// TECHO5 updates and removes.
+var errCatalog = errors.New("this add-on is installed from TECHO5's Add-ons card (setup page, System tab): update or remove it there")
+
 func uninstall(args []string) error {
+	if catalog {
+		return errCatalog
+	}
 	purge := len(args) == 1 && args[0] == "--purge"
 	if len(args) > 0 && !purge {
 		return errors.New("uninstall takes --purge, or nothing")

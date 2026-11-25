@@ -83,6 +83,39 @@ Releases before v1.6.45 have not been tried.
 
 ## Install
 
+Two ways: from TECHO5's **Add-ons** card, where TECHO5 installs, starts and updates it, or with
+`tools/install.py` from your computer, which starts it from `rc.local`. Use one of them, not both: an
+install from the card takes over one made by hand.
+
+### From TECHO5's Add-ons card
+
+On TECHO5 v1.6.53 and later, once TECHO5's add-on catalog lists this add-on: on the device's setup page,
+**System** tab, **Add-ons** card, install **techo5-netbird**. The card warns before every install, and
+says in bold that it runs as root (NetBird makes a network interface).
+
+TECHO5 downloads the add-on and NetBird's client archive, which the signed catalog pins by their
+SHA-256 (the add-on checks the archive again against its own pin), installs them under
+`/data/techo5-addons/techo5-netbird`, starts it, keeps it running and offers updates on the card and in
+Home Assistant. Its log is on the card.
+
+On its first start, while it has no peer of its own, it takes one over, so no new setup key is needed:
+
+- **an install by hand** of this add-on: it takes it out of `rc.local`, stops it, moves its peer and
+  settings (management server, routes) over and deletes `/data/techo5-netbird`;
+- otherwise **TECHO5's built-in NetBird's** peer, which TECHO5 v1.6.47 kept for this.
+
+With neither, join over SSH, as under [A new device](#a-new-device):
+
+```sh
+ssh -t root@<device> /data/techo5-addons/techo5-netbird/bin/techo5-netbird join --management https://netbird.example.com
+```
+
+The other commands below (`status`, `routes`) work the same over SSH, as
+`/data/techo5-addons/techo5-netbird/bin/techo5-netbird`. Remove it on the card: its peer is kept for
+installing it again unless you tick the box to delete it too.
+
+### With tools/install.py
+
 From your computer, with Python 3 and an ssh client (Windows 10 and later have one):
 
 ```sh
@@ -93,8 +126,8 @@ python3 tools/install.py <device>
 
 `<device>` is the device's address or name on your network. The script:
 
-1. downloads `techo5-netbird` from the [latest release](https://github.com/tioan/techo5-netbird/releases/latest)
-   and checks its SHA-256;
+1. downloads `techo5-netbird-arm64` from the [latest release](https://github.com/tioan/techo5-netbird/releases/latest)
+   and checks it against the release's `SHA256SUMS`;
 2. sends it to the device over SSH and installs it there: the add-on copies itself to
    `/data/techo5-netbird`, downloads NetBird's client (about 15 MB, 40 MB unpacked), adds one marked
    line to `/data/techo5-linux/rc.local` (anything else in that file is left as it is), and starts;
@@ -140,7 +173,7 @@ The commands below are shown as `techo5-netbird`: run them on the device as
 `/data/techo5-netbird/bin/techo5-netbird`. Without the script, an install is:
 
 ```sh
-ssh root@<device> 'cat > /tmp/techo5-netbird && chmod 755 /tmp/techo5-netbird && /tmp/techo5-netbird install && rm /tmp/techo5-netbird' < techo5-netbird
+ssh root@<device> 'cat > /tmp/techo5-netbird && chmod 755 /tmp/techo5-netbird && /tmp/techo5-netbird install && rm /tmp/techo5-netbird' < techo5-netbird-arm64
 ssh root@<device> /data/techo5-netbird/bin/techo5-netbird migrate      # or:
 ssh -t root@<device> /data/techo5-netbird/bin/techo5-netbird join --management https://netbird.example.com
 ```
@@ -186,12 +219,16 @@ looks again every minute.
 
 ## Updates
 
-- **TECHO5 updates** leave the add-on alone: it lives on userdata, and `rc.local` starts it again.
-- **Add-on updates:** run `python3 tools/install.py <device>` again (after a `git pull`). It replaces
+- **TECHO5 updates** leave the add-on alone: it lives on userdata, and TECHO5 (or `rc.local`) starts it
+  again.
+- **Add-on updates from the card:** on the Add-ons card, or the add-on's update entity in Home Assistant.
+- **Add-on updates by hand:** run `python3 tools/install.py <device>` again (after a `git pull`). It replaces
   the old one and starts again; the peer and the settings are kept. A release that pins a newer
   NetBird downloads it, and removes the old one. What changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Uninstall
+
+Installed from the card: **Remove** on the card. By hand:
 
 ```sh
 techo5-netbird uninstall           # stops it, no longer started at boot; the peer is kept
@@ -215,8 +252,14 @@ in it.
 ## Building
 
 ```sh
-CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w -X main.version=<version>" -o techo5-netbird .
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w -X main.version=<version>" -o techo5-netbird-arm64 .
+CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -trimpath -ldflags "-s -w -X main.version=<version>" -o techo5-netbird-arm .
 ```
+
+`arm64` is the one an install by hand uses. `arm` is the one TECHO5's add-on catalog gives every device,
+as TECHO5's own programs are 32-bit; it needs the 64-bit kernel the Echo Shows and the Echo Spot have,
+for NetBird's `linux_arm64` client. Each release has both, `addon.json` (what the catalog lists),
+`SHA256SUMS`, and a build provenance attestation (`gh attestation verify <file> -R tioan/techo5-netbird`).
 
 The Go tests are Linux-only: `CGO_ENABLED=0 go test ./...`. The installer's tests run anywhere:
 `python3 -m unittest discover -s tools`.

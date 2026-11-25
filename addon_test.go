@@ -24,10 +24,13 @@ func sandbox(t *testing.T) string {
 	t.Helper()
 	d := t.TempDir()
 	wasHome, wasT5, wasRC, wasRun := home, techo5Dir, rcLocal, runDir
+	wasHand, wasCatDir, wasCat, wasCatBin := handHome, catalogDir, catalog, catalogBin
 	home, techo5Dir, rcLocal, runDir = filepath.Join(d, "addon"), filepath.Join(d, "techo5"), filepath.Join(d, "rc.local"), filepath.Join(d, "run")
+	handHome, catalogDir, catalog, catalogBin = home, filepath.Join(d, "catalog"), false, ""
 	logger.to = &bytes.Buffer{}
 	t.Cleanup(func() {
 		home, techo5Dir, rcLocal, runDir = wasHome, wasT5, wasRC, wasRun
+		handHome, catalogDir, catalog, catalogBin = wasHand, wasCatDir, wasCat, wasCatBin
 		logger.to = nil
 	})
 	for _, p := range []string{home, techo5Dir, runDir} {

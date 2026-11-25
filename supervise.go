@@ -67,6 +67,15 @@ func runSupervisor() error {
 	if err := os.MkdirAll(runDir, 0o755); err != nil {
 		return err
 	}
+	if catalog {
+		// An install by hand stops here for good: the catalog install runs NetBird from now on, and
+		// takes over its peer below. Its supervisor holds the lock the two share.
+		if _, err := os.Stat(handHome); err == nil {
+			if err := stopHand(); err != nil {
+				logf("%v", err)
+			}
+		}
+	}
 	lock, err := os.OpenFile(lockPath(), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return err
@@ -95,6 +104,9 @@ func runSupervisor() error {
 	}()
 
 	logf("started, NetBird's client %s", clientVersion)
+	if catalog {
+		takeOver()
+	}
 	backoff := backoffFirst
 	for ctx.Err() == nil {
 		if err := preflight(); err != nil {

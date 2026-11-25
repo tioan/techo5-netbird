@@ -6,6 +6,10 @@ a client of its own. Each add-on release pins one NetBird version: its download 
 and SHA-256 are written into the add-on. Before a downloaded client is unpacked or run, the device
 checks it against those values.
 
+Installed from TECHO5's add-on catalog, the add-on downloads nothing itself: the signed catalog pins
+the same NetBird archive beside the add-on's own program, the device downloads and checks it, and the
+add-on checks it once more against its own pin before it unpacks it.
+
 TECHO5's built-in NetBird did this the other way: it built the client from NetBird's source with
 its own script and published that build itself. This page explains why the add-on does not.
 

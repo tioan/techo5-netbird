@@ -39,6 +39,11 @@ var clientArchive = pinned{
 	SHA256: "428a6fdc330bc43c2791ef208ce6b059d50731cf4bffc5a6e4e8af2f4c7a5029",
 }
 
+// clientFile is the name NetBird's archive has beside the program in a catalog install: TECHO5's add-on
+// catalog pins it next to the add-on's binary (addon.json's "files"), and the device downloads and checks
+// it, so the add-on never downloads it there itself.
+const clientFile = "netbird.tar.gz"
+
 // clientBin is where the pinned client is kept, by its version, so a release that pins a newer one
 // fetches it.
 func clientBin() string { return filepath.Join(clientDir(), "netbird-"+clientVersion) }
@@ -64,10 +69,24 @@ func fetchClient(ctx context.Context) error {
 	if syscall.Statfs(dir, &fs) == nil && int64(fs.Bavail)*int64(fs.Bsize) < room {
 		return fmt.Errorf("not enough room on userdata for NetBird's client (it needs %d MB)", room>>20)
 	}
-	logf("downloading NetBird's client %s", clientVersion)
 	archive := filepath.Join(dir, "netbird-"+clientVersion+".tar.gz")
-	if err := download(ctx, clientArchive, archive); err != nil {
-		return fmt.Errorf("downloading NetBird's client: %w", err)
+	if catalog {
+		// What the catalog pinned, checked again against this release's own pin before it is unpacked.
+		src := filepath.Join(catalogBin, clientFile)
+		f, err := os.Open(src)
+		if err != nil {
+			return fmt.Errorf("NetBird's client is not where TECHO5's add-on catalog puts it (%s): %w", src, err)
+		}
+		err = saveChecked(f, clientArchive, archive)
+		f.Close()
+		if err != nil {
+			return fmt.Errorf("NetBird's client in %s: %w", src, err)
+		}
+	} else {
+		logf("downloading NetBird's client %s", clientVersion)
+		if err := download(ctx, clientArchive, archive); err != nil {
+			return fmt.Errorf("downloading NetBird's client: %w", err)
+		}
 	}
 	defer os.Remove(archive)
 	if err := unpack(archive, dir, bin); err != nil {
@@ -102,6 +121,12 @@ func download(ctx context.Context, p pinned, to string) error {
 	if resp.ContentLength >= 0 && resp.ContentLength != p.Size {
 		return fmt.Errorf("the server says %d bytes, the add-on expects %d", resp.ContentLength, p.Size)
 	}
+	return saveChecked(resp.Body, p, to)
+}
+
+// saveChecked copies r to the file to, checked against p's size and SHA-256 as it comes: kept beside to
+// until it is whole and matches, and removed if it does not.
+func saveChecked(r io.Reader, p pinned, to string) error {
 	part := to + ".part"
 	f, err := os.OpenFile(part, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
@@ -109,7 +134,7 @@ func download(ctx context.Context, p pinned, to string) error {
 	}
 	defer os.Remove(part)
 	h := sha256.New()
-	n, err := io.Copy(io.MultiWriter(f, h), io.LimitReader(resp.Body, p.Size+1))
+	n, err := io.Copy(io.MultiWriter(f, h), io.LimitReader(r, p.Size+1))
 	if err == nil {
 		err = f.Sync()
 	}

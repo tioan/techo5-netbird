@@ -39,13 +39,19 @@ import urllib.error
 import urllib.request
 
 REPO = 'tioan/techo5-netbird'
-ASSET = 'techo5-netbird'
+# The program an install by hand runs, and the file of SHA-256 sums beside it in a release. Releases
+# before 0.2.0 had one program, under the add-on's name, with a SHA-256 file of its own (LEGACY).
+ASSET = 'techo5-netbird-arm64'
+SUMS = 'SHA256SUMS'
+LEGACY = ('techo5-netbird', 'techo5-netbird.sha256')
 REMOTE_BIN = '/data/techo5-netbird/bin/techo5-netbird'
 REMOTE_TMP = '/tmp/techo5-netbird.install'
 
 # What the device has, asked before anything is installed; one word per line.
 PROBE = (
     f'[ -x {REMOTE_BIN} ] && echo installed; '
+    # Installed from TECHO5's Add-ons card (v1.6.53 and later), which updates and removes it.
+    '[ -f /data/techo5-addons/techo5-netbird/addon.json ] && echo catalog; '
     'grep -q \'"joined": *true\' /data/techo5-netbird/config.json 2>/dev/null && echo joined; '
     '[ -f /data/misc/techo5/netbird/state/default.json ] && echo builtin-peer; '
     # TECHO5's own NetBird switch, on: up to v1.6.46 only, where it has one.
@@ -60,24 +66,26 @@ class Fail(Exception):
 
 # ------------------------------------------------------------------------------------------ release
 
-def release_urls(version):
-    """The program's and its SHA-256's download URLs, for a release tag or the latest."""
+def release_urls(version, legacy=False):
+    """The program's and its SHA-256 file's download URLs, for a release tag or the latest, and the
+    program's name in the release."""
     if version:
         base = f'https://github.com/{REPO}/releases/download/{version}/'
     else:
         base = f'https://github.com/{REPO}/releases/latest/download/'
-    return base + ASSET, base + ASSET + '.sha256'
+    asset, sums = LEGACY if legacy else (ASSET, SUMS)
+    return base + asset, base + sums, asset
 
 
-def parse_sha256(text):
-    """The SHA-256 in a sha256sum line for the program."""
+def parse_sha256(text, asset=ASSET):
+    """The SHA-256 a sha256sum file gives the program."""
     for line in text.splitlines():
         parts = line.split()
-        if len(parts) == 2 and parts[1].lstrip('*') == ASSET:
+        if len(parts) == 2 and parts[1].lstrip('*') == asset:
             h = parts[0].lower()
             if len(h) == 64 and all(c in '0123456789abcdef' for c in h):
                 return h
-    raise Fail('the release\'s SHA-256 file does not name techo5-netbird')
+    raise Fail(f'the release\'s SHA-256 file does not name {asset}')
 
 
 def sha256_file(path):
@@ -94,11 +102,19 @@ def _open(url):
 
 def fetch_release(version, folder):
     """Downloads the program into folder and answers its path, once its SHA-256 is the release's."""
-    url, sum_url = release_urls(version)
-    print(f'release:  {url}')
     try:
-        with _open(sum_url) as r:
-            want = parse_sha256(r.read().decode('utf-8', 'replace'))
+        url, sum_url, asset = release_urls(version)
+        try:
+            with _open(sum_url) as r:
+                sums = r.read()
+        except urllib.error.HTTPError as e:
+            if e.code != 404 or not version:
+                raise
+            url, sum_url, asset = release_urls(version, legacy=True)  # a release before 0.2.0
+            with _open(sum_url) as r:
+                sums = r.read()
+        print(f'release:  {url}')
+        want = parse_sha256(sums.decode('utf-8', 'replace'), asset)
         out = os.path.join(folder, ASSET)
         with _open(url) as r, open(out, 'wb') as f:
             shutil.copyfileobj(r, f, 1 << 20)
@@ -162,6 +178,7 @@ def parse_probe(out):
         'joined': 'joined' in words,
         'builtin_peer': 'builtin-peer' in words,
         'builtin_on': 'builtin-on' in words,
+        'catalog': 'catalog' in words,
         'arch_ok': 'aarch64' in words or 'arm64' in words,
     }
 
@@ -233,6 +250,9 @@ def main(argv=None):
             if r.returncode != 0:
                 raise Fail('ssh to the device failed: is SSH on in TECHO5, with your key set?')
             state = parse_probe(r.stdout)
+            if state['catalog']:
+                raise Fail('techo5-netbird is installed from TECHO5\'s Add-ons card on this device '
+                           '(setup page, System tab): update it there')
             if not state['arch_ok']:
                 raise Fail('the device is not one the add-on runs on (it needs a 64-bit ARM kernel)')
             print('          ' + ('an update of the add-on' if state['installed'] else 'a new install'))
