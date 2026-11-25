@@ -44,6 +44,7 @@ func main() {
 	}
 	cmd, args := os.Args[1], os.Args[2:]
 	setMode(cmd == "run")
+	os.Setenv("PATH", withSbin(os.Getenv("PATH")))
 	// Started by TECHO5's add-on manager, the log goes to TECHO5, which keeps it bounded and shows it on
 	// the add-on's card; commands run by hand write to the terminal.
 	if cmd != "run" || catalog {

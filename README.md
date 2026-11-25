@@ -67,6 +67,7 @@ All on the Echo Show 8 (2nd gen):
 | v1.6.45 → v1.6.46 | v0.1.0 | TECHO5 update with the add-on running: started again from `rc.local` and connected, peer, settings and firewall rule unchanged |
 | v1.6.46 → v1.6.47 | v0.1.0 | the built-in NetBird's removal on the update, then `tools/install.py` with `migrate`: same peer, policies, a reboot |
 | v1.6.47 | v0.1.1 | an update of the add-on over v0.1.0: peer kept, no question about a NetBird switch |
+| v1.6.53 | v0.2.0 (test builds) | updates by hand with the `arm64` and the `arm` build; catalog mode as TECHO5's add-on manager starts it (simulated, beside the Add-ons card): took over an install by hand, NetBird's archive from `bin/`, same peer; direct (P2P) links with no port opened |
 
 Releases before v1.6.45 have not been tried.
 

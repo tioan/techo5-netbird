@@ -56,6 +56,25 @@ func setMode(supervisor bool) {
 	catalog, home = false, handHome
 }
 
+// withSbin is a PATH with the system's sbin folders at its end, where they are missing: TECHO5's add-on
+// manager starts add-ons with /usr/local/bin:/usr/bin:/bin, and the firewall check (iptables-legacy,
+// in /usr/sbin) and NetBird's client (ip, in /sbin) need them.
+func withSbin(path string) string {
+	have := map[string]bool{}
+	for _, d := range filepath.SplitList(path) {
+		have[d] = true
+	}
+	for _, d := range []string{"/usr/local/sbin", "/usr/sbin", "/sbin"} {
+		if !have[d] {
+			if path != "" {
+				path += string(filepath.ListSeparator)
+			}
+			path += d
+		}
+	}
+	return path
+}
+
 func binDir() string      { return filepath.Join(home, "bin") }
 func selfPath() string    { return filepath.Join(binDir(), "techo5-netbird") }
 func clientDir() string   { return filepath.Join(home, "client") }

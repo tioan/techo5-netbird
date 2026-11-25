@@ -21,6 +21,8 @@ For TECHO5's add-on catalog (TECHO5 v1.6.53 and later,
 - An `arm` build beside `arm64`: the catalog gives every device the `arm` one, as TECHO5's own programs
   are 32-bit. It needs a 64-bit kernel for NetBird's `linux_arm64` client, and says so on one without.
 - Each release has `addon.json`, `SHA256SUMS` and a build provenance attestation.
+- The system's sbin folders are added to `PATH` where missing: TECHO5's add-on manager starts add-ons
+  without them, and the firewall check and NetBird's client need `iptables-legacy` and `ip`.
 
 ### Changed
 

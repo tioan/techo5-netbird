@@ -249,3 +249,15 @@ func TestAddonJSON(t *testing.T) {
 		t.Errorf("version %q: X.Y.Z, without a v", m.Version)
 	}
 }
+
+func TestWithSbin(t *testing.T) {
+	for in, want := range map[string]string{
+		"/usr/local/bin:/usr/bin:/bin":                                 "/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin",
+		"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		"": "/usr/local/sbin:/usr/sbin:/sbin",
+	} {
+		if got := withSbin(in); got != want {
+			t.Errorf("%q: %q, want %q", in, got, want)
+		}
+	}
+}
