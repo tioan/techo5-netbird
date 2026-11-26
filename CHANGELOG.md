@@ -6,6 +6,8 @@ All notable changes to techo5-netbird. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-26
+
 For TECHO5's add-on catalog (TECHO5 v1.6.53 and later,
 [HuskerMinion/techo5-addons#3](https://github.com/HuskerMinion/techo5-addons/issues/3)).
 
@@ -73,6 +75,7 @@ The first release: NetBird for TECHO5 devices as an add-on outside TECHO5, as pr
 - READMEs in English and German, and [docs/client-binary.md](https://github.com/tioan/techo5-netbird/blob/main/docs/client-binary.md) on why the add-on
   uses NetBird's own binary.
 
-[Unreleased]: https://github.com/tioan/techo5-netbird/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/tioan/techo5-netbird/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/tioan/techo5-netbird/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/tioan/techo5-netbird/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/tioan/techo5-netbird/releases/tag/v0.1.0
