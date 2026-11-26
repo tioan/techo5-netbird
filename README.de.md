@@ -75,6 +75,7 @@ Alle auf dem Echo Show 8 (2. Generation):
 | v1.6.46 → v1.6.47 | v0.1.0 | Entfernen des eingebauten NetBird beim Update, danach `tools/install.py` mit `migrate`: derselbe Peer, Policies, ein Reboot |
 | v1.6.47 | v0.1.1 | Update des Add-ons über v0.1.0: Peer bleibt, keine Frage nach einem NetBird-Schalter |
 | v1.6.53 | v0.2.0 (Test-Builds) | Updates von Hand mit dem `arm64`- und dem `arm`-Build; Katalog-Modus so gestartet wie von TECHO5s Add-on-Manager (nachgestellt, neben der Karte „Add-ons“): Installation von Hand übernommen, NetBirds Archiv aus `bin/`, derselbe Peer; direkte (P2P-)Verbindungen ohne freigegebenen Port |
+| v1.6.54 | v0.2.0 | NetBirds Client 0.83.2: Updates von Hand über v0.1.1 mit dem `arm64`- und dem `arm`-Build (0.81.4 gelöscht, derselbe Peer, direkte Verbindungen); Katalog-Modus erneut nachgestellt: eine laufende Installation von Hand übernommen, ein zweiter Katalog-Supervisor ließ den ersten und dessen Daemon in Ruhe; zurück zu v0.1.1 von Hand, Peer unverändert |
 
 Versionen vor v1.6.45 sind nicht getestet.
 
