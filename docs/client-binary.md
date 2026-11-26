@@ -40,7 +40,7 @@ new hash, release. With a build of our own, every NetBird release would also nee
 check that it is reproducible, and an upload of our own.
 
 The same goes for Go itself. Security fixes in Go's standard library (TLS, HTTP, crypto) reach the
-client through NetBird's next release. NetBird releases often, and its 0.81.4 build already uses a
+client through NetBird's next release. NetBird releases often, and its 0.83.2 build uses a
 newer Go (1.26.10) than the one TECHO5's own build script pinned (1.26.8).
 
 ## What a build of our own would have given, and why it matters less here
@@ -61,14 +61,14 @@ newer Go (1.26.10) than the one TECHO5's own build script pinned (1.26.8).
 - It protects against any change after the add-on's version was tested: a replaced release file, a
   tampered download, a broken mirror, a corrupt transfer. A client that does not match is never run.
 - It does not protect against a NetBird release that was bad before it was pinned. NetBird publishes a
-  checksum file but, as of 0.81.4, no signature or build attestation for its Linux archives, so the
+  checksum file but, as of 0.83.2, no signature or build attestation for its Linux archives, so the
   checksum only proves the file is the one on the release page. This is the same trust you place in
   NetBird when you install its client anywhere else. Every pinned version is tested on a device before
   it is released.
 
 ## Sizes
 
-NetBird 0.81.4, arm64: about 14.6 MB to download and 40.3 MB unpacked (a static aarch64 program).
+NetBird 0.83.2, arm64: about 14.7 MB to download and 40.6 MB unpacked (a static aarch64 program).
 TECHO5's own build was 14.0 MB and about the same size unpacked. The archive also carries NetBird's
 README, changelog and licenses. The add-on keeps the licenses next to the client and leaves out the
 rest.

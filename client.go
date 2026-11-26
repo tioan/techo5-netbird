@@ -24,7 +24,7 @@ import (
 // The NetBird client this release of the add-on runs: NetBird's own release archive, as NetBird
 // published it, pinned by size and SHA-256 (docs/client-binary.md). A new NetBird version is a new
 // release of the add-on, after it was tested on a device.
-const clientVersion = "0.81.4"
+const clientVersion = "0.83.2"
 
 type pinned struct {
 	URL    string
@@ -35,8 +35,8 @@ type pinned struct {
 // clientArchive is a variable, for tests.
 var clientArchive = pinned{
 	URL:    "https://github.com/netbirdio/netbird/releases/download/v" + clientVersion + "/netbird_" + clientVersion + "_linux_arm64.tar.gz",
-	Size:   14612695,
-	SHA256: "428a6fdc330bc43c2791ef208ce6b059d50731cf4bffc5a6e4e8af2f4c7a5029",
+	Size:   14731206,
+	SHA256: "856eece869b6e2808760cc0e3f30d8f9d639728e5c1c5410a8895de28d7244e0",
 }
 
 // clientFile is the name NetBird's archive has beside the program in a catalog install: TECHO5's add-on

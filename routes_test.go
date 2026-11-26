@@ -59,7 +59,7 @@ func TestParseRoutes(t *testing.T) {
 	}
 }
 
-// What `netbird networks list` says (client/cmd/networks.go, v0.81.4).
+// What `netbird networks list` says (client/cmd/networks.go, v0.83.2).
 const networksList = `Available Networks:
 
   - ID: home-lan

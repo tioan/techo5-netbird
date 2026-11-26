@@ -26,6 +26,9 @@ For TECHO5's add-on catalog (TECHO5 v1.6.53 and later,
 
 ### Changed
 
+- NetBird's client 0.83.2 instead of 0.81.4, pinned by its size and SHA-256 as before. An update
+  fetches it and deletes 0.81.4. NetBird's updater stays off on Linux in 0.83.2 as well: it only reports a
+  new version and never installs one.
 - Release assets are `techo5-netbird-arm` and `techo5-netbird-arm64`, with `SHA256SUMS`, instead of
   `techo5-netbird` and `techo5-netbird.sha256`. `tools/install.py` installs `techo5-netbird-arm64`, and
   still the old names with `--version` for a release before 0.2.0.
