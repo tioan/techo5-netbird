@@ -156,7 +156,8 @@ func releaseVersion(line string) ([3]int, bool) {
 
 // kernel64 says whether the kernel runs 64-bit ARM programs, which NetBird's client (linux_arm64) is.
 // The add-on itself also comes as a 32-bit build, the one TECHO5's add-on catalog gives every device,
-// since TECHO5's own programs are 32-bit; the Echo Shows and the Echo Spot have a 64-bit kernel under it.
+// since TECHO5's own programs are 32-bit. The kernel under them is not always 64-bit: an Echo Show 8
+// (2nd gen) on Amazon's kernel runs a 32-bit one, and this check says so there.
 var kernel64 = func() error {
 	out, err := exec.Command("uname", "-m").Output()
 	if err != nil {
