@@ -5,11 +5,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 // catalogSandbox is sandbox with a catalog install's layout: bin/ and state/ under catalogDir, and the
@@ -259,5 +264,92 @@ func TestWithSbin(t *testing.T) {
 		if got := withSbin(in); got != want {
 			t.Errorf("%q: %q, want %q", in, got, want)
 		}
+	}
+}
+
+// holdLock takes the supervisor's lock the way another supervisor would, on its own open file.
+func holdLock(t *testing.T) *os.File {
+	t.Helper()
+	f, err := os.OpenFile(lockPath(), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { f.Close() })
+	return f
+}
+
+func TestTakeLockSecondCatalog(t *testing.T) {
+	catalogSandbox(t)
+	os.MkdirAll(handHome, 0o755)
+	withBlock := "#!/bin/sh\necho mine\n" + rcBlock()
+	os.WriteFile(rcLocal, []byte(withBlock), 0o755)
+	holdLock(t) // the first catalog supervisor
+
+	if _, err := takeLock(); !errors.Is(err, errAlreadyRunning) {
+		t.Fatalf("a second catalog supervisor: %v", err)
+	}
+	// It stopped nothing: the install by hand is still started from rc.local.
+	if b, _ := os.ReadFile(rcLocal); string(b) != withBlock {
+		t.Errorf("rc.local: %q", b)
+	}
+}
+
+// TestHandSupervisor stands in for the install by hand's supervisor in TestTakeLockFromHand: the test
+// binary, run again under handHome, waits there until it is stopped.
+func TestHandSupervisor(t *testing.T) {
+	if os.Getenv("TECHO5_NETBIRD_TEST_HAND") == "" {
+		t.Skip("only as the install by hand of TestTakeLockFromHand")
+	}
+	time.Sleep(time.Minute)
+}
+
+func TestTakeLockFromHand(t *testing.T) {
+	catalogSandbox(t)
+	was := lockWait
+	t.Cleanup(func() { lockWait = was })
+	lockWait = 10 * time.Second
+	// The install by hand's supervisor: a program under handHome, its pid in the pid file, holding the lock.
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(self)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prog := filepath.Join(handHome, "techo5-netbird")
+	if err := os.WriteFile(prog, b, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(prog, "-test.run=^TestHandSupervisor$")
+	cmd.Env = append(os.Environ(), "TECHO5_NETBIRD_TEST_HAND=1")
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { cmd.Process.Kill() })
+	os.WriteFile(pidPath(), []byte(strconv.Itoa(cmd.Process.Pid)+"\n"), 0o644)
+	held := holdLock(t)
+	gone := make(chan struct{})
+	go func() { cmd.Wait(); held.Close(); close(gone) }() // its lock goes with it
+	os.WriteFile(rcLocal, []byte("#!/bin/sh\necho mine\n"+rcBlock()), 0o755)
+	if handSupervisor() != cmd.Process.Pid {
+		t.Fatal("the stand-in is not taken for the install by hand")
+	}
+
+	lock, err := takeLock()
+	if err != nil {
+		t.Fatalf("taking the lock from the install by hand: %v", err)
+	}
+	lock.Close()
+	select {
+	case <-gone:
+	default:
+		t.Error("the install by hand still runs")
+	}
+	if b, _ := os.ReadFile(rcLocal); string(b) != "#!/bin/sh\necho mine\n" {
+		t.Errorf("rc.local: %q", b)
 	}
 }

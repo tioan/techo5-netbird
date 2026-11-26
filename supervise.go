@@ -67,23 +67,11 @@ func runSupervisor() error {
 	if err := os.MkdirAll(runDir, 0o755); err != nil {
 		return err
 	}
-	if catalog {
-		// An install by hand stops here for good: the catalog install runs NetBird from now on, and
-		// takes over its peer below. Its supervisor holds the lock the two share.
-		if _, err := os.Stat(handHome); err == nil {
-			if err := stopHand(); err != nil {
-				logf("%v", err)
-			}
-		}
-	}
-	lock, err := os.OpenFile(lockPath(), os.O_CREATE|os.O_RDWR, 0o600)
+	lock, err := takeLock()
 	if err != nil {
 		return err
 	}
 	defer lock.Close()
-	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		return errAlreadyRunning
-	}
 	if err := os.WriteFile(pidPath(), []byte(strconv.Itoa(os.Getpid())+"\n"), 0o644); err != nil {
 		return err
 	}
@@ -138,6 +126,45 @@ func runSupervisor() error {
 }
 
 var errAlreadyRunning = errors.New("the supervisor is running already")
+
+// lockWait is how long a catalog install waits for the lock once it stopped the install by hand that
+// held it. A variable, for tests.
+var lockWait = 20 * time.Second
+
+// takeLock takes the supervisor's lock, which a catalog install and an install by hand share. Anything
+// is stopped only with the lock taken, or when the install by hand holds it: a second supervisor of
+// the same install answers errAlreadyRunning and leaves the first, and its daemon, be.
+func takeLock() (*os.File, error) {
+	lock, err := os.OpenFile(lockPath(), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	free := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB) == nil
+	if !free && !(catalog && handSupervisor() != 0) {
+		lock.Close()
+		return nil, errAlreadyRunning
+	}
+	if catalog {
+		// An install by hand stops here for good: the catalog install runs NetBird from now on, and
+		// takes over its peer.
+		if _, err := os.Stat(handHome); err == nil {
+			if err := stopHand(); err != nil {
+				logf("%v", err)
+			}
+		}
+	}
+	for start := time.Now(); !free; {
+		if syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB) == nil {
+			break
+		}
+		if time.Since(start) > lockWait {
+			lock.Close()
+			return nil, errAlreadyRunning
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return lock, nil
+}
 
 // wait waits d, or less if asked to look again (SIGHUP) or to stop.
 func (s *supervisor) wait(ctx context.Context, d time.Duration) {
