@@ -2,11 +2,14 @@ techo5-netbird
 Copyright (c) 2026 tioan. MIT License, see LICENSE.
 
 NetBird
-  The add-on downloads NetBird's client at run time from NetBird's own GitHub
-  releases (https://github.com/netbirdio/netbird). It is not part of this
-  repository or its releases. NetBird's client is BSD-3-Clause licensed; its
-  licenses come with the download and are kept beside the client on the device
-  (/data/techo5-netbird/client/LICENSE, LICENSES/).
+  NetBird's client is NetBird's own release archive from its GitHub releases
+  (https://github.com/netbirdio/netbird), pinned by size and SHA-256. It is not
+  part of this repository or its releases. Installed from TECHO5's add-on
+  catalog, the device downloads the archive the catalog pins; installed by hand,
+  the add-on downloads it at run time. NetBird's client is BSD-3-Clause
+  licensed; its licenses come with the archive and are kept beside the client on
+  the device: in the add-on's state folder ($TECHO5_ADDON_STATE/client/LICENSE,
+  LICENSES/) from the catalog, in /data/techo5-netbird/client/ by hand.
 
 TECHO5
   Parts are adapted from TECHO5 (https://github.com/HuskerMinion/techo5),
