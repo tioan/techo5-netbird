@@ -212,7 +212,7 @@ techo5-netbird status
 
 It says whether the add-on starts at boot, whether NetBird runs and is connected, under which name
 and address, the routes in use, and what is wrong if anything is. The log is
-`/data/techo5-netbird/techo5-netbird.log`, NetBird's own lines included. At 1 MB it is kept as `.1`
+`/data/techo5-netbird/techo5-netbird.log`, NetBird's warnings and errors included. At 1 MB it is kept as `.1`
 and a new one is begun.
 
 The add-on restarts NetBird if it exits: after 5 seconds at first, then up to 5 minutes apart. It

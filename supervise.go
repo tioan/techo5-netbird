@@ -212,8 +212,11 @@ func (s *supervisor) runOnce(ctx context.Context) error {
 	defer runtime.UnlockOSThread()
 	rctx, stop := context.WithCancel(ctx)
 	defer stop()
+	// NetBird logs at warn: at info it writes a line for every health probe, which each status poll
+	// starts, and a periodic stat line per peer. On an Echo those were 84% of about 7 MB a day of log
+	// on flash, and the catalog asks an add-on not to log on every poll.
 	cmd := exec.CommandContext(rctx, clientBin(), "service", "run", daemonAddr(),
-		"--log-file=console", "--log-level=info")
+		"--log-file=console", "--log-level=warn")
 	cmd.Env = env()
 	out := &lineWriter{}
 	cmd.Stdout, cmd.Stderr = out, out
