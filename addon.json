@@ -1,6 +1,6 @@
 {
   "id": "techo5-netbird",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "command": ["techo5-netbird"],
   "args": ["run"],
   "files": ["netbird.tar.gz"],

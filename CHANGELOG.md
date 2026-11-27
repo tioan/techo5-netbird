@@ -6,6 +6,14 @@ All notable changes to techo5-netbird. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-27
+
+### Changed
+
+- NetBird logs only warnings and errors. At info it wrote a line for every health probe, which the
+  add-on's status poll starts every 30 seconds or so, and a stat line per peer: about 7 MB a day on an
+  Echo's flash, by hand or on the card.
+
 ## [0.2.0] - 2026-11-26
 
 For TECHO5's add-on catalog (TECHO5 v1.6.53 and later,
@@ -75,7 +83,8 @@ The first release: NetBird for TECHO5 devices as an add-on outside TECHO5, as pr
 - READMEs in English and German, and [docs/client-binary.md](https://github.com/tioan/techo5-netbird/blob/main/docs/client-binary.md) on why the add-on
   uses NetBird's own binary.
 
-[Unreleased]: https://github.com/tioan/techo5-netbird/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/tioan/techo5-netbird/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/tioan/techo5-netbird/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/tioan/techo5-netbird/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/tioan/techo5-netbird/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/tioan/techo5-netbird/releases/tag/v0.1.0
